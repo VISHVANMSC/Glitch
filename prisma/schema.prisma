@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  TEAM_LEADER
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PrizeResult {
+  NONE
+  PARTICIPATED
+  FIRST_PRIZE
+  SECOND_PRIZE
+  THIRD_PRIZE
+}
+
+enum CoordinatorType {
+  FACULTY
+  STUDENT
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String
+  role         Role     @default(TEAM_LEADER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teams Team[]
+}
+
+model Team {
+  id                   String             @id @default(uuid())
+  teamId               String?            @unique // Auto-generated upon approval: GL-01, GL-02...
+  teamName             String             @unique
+  teamSize             Int
+  leaderId             String
+  leader               User               @relation(fields: [leaderId], references: [id], onDelete: Cascade)
+  status               RegistrationStatus @default(PENDING)
+  rejectionReason      String?
+  paymentScreenshotUrl String
+  transactionUtor      String
+  paymentStatus        PaymentStatus      @default(PENDING)
+  
+  selectedPsId         String?
+  selectedPs           ProblemStatement?  @relation(fields: [selectedPsId], references: [id], onDelete: SetNull)
+  selectedAt           DateTime?
+  
+  result               PrizeResult        @default(NONE)
+
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  members              TeamMember[]
+}
+
+model TeamMember {
+  id         String   @id @default(uuid())
+  teamId     String
+  team       Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isLeader   Boolean  @default(false)
+  name       String
+  email      String
+  phone      String
+  college    String
+  department String
+  year       String
+  createdAt  DateTime @default(now())
+}
+
+model ProblemStatement {
+  id          String   @id @default(uuid())
+  psNumber    String   @unique // PS-01, PS-02...
+  title       String
+  description String   @db.Text
+  category    String?
+  driveLink   String
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  selectedByTeams Team[]
+}
+
+model PsSelectionWindow {
+  id              String    @id @default("default_window")
+  isOpen          Boolean   @default(false)
+  startTime       DateTime?
+  endTime         DateTime?
+  durationMinutes Int       @default(30)
+  updatedAt       DateTime  @updatedAt
+}
+
+model Coordinator {
+  id          String          @id @default(uuid())
+  type        CoordinatorType
+  name        String
+  designation String?         // For faculty
+  role        String?         // For students
+  department  String
+  phone       String?
+  email       String?
+  photoUrl    String?
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model LandingPageContent {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  recipient String
+  subject   String
+  status    String   // SENT, FAILED
+  error     String?
+  createdAt DateTime @default(now())
+}

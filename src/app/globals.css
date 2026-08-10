@@ -1,26 +1,219 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    
+    /* User Custom Palette Hex Tokens */
+    --color-flame: #E43D12;
+    --color-berry: #D6536D;
+    --color-rose: #FFA2B6;
+    --color-gold: #EFB11D;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+    font-family: var(--font-sans);
+    color-scheme: light;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    overflow-x: hidden;
+    perspective: 1200px;
+    selection-background-color: #E43D12;
+    selection-color: #ffffff;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Visible Cyber Grid Pattern with Ambient 3D Glow */
+.bg-cyber-grid {
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(228, 61, 18, 0.15) 0%, rgba(239, 177, 29, 0.10) 35%, transparent 70%),
+    radial-gradient(circle at 85% 65%, rgba(228, 61, 18, 0.10) 0%, rgba(214, 83, 109, 0.08) 45%, transparent 75%),
+    linear-gradient(to right, rgba(228, 61, 18, 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(228, 61, 18, 0.09) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+  background-attachment: fixed;
+}
+
+/* 3D Perspective Containers */
+.perspective-1000 {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Premium 3D Light Layered Card */
+.card-3d {
+  position: relative;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1.5rem;
+  box-shadow: 
+    0 20px 40px -15px rgba(15, 23, 42, 0.07),
+    0 8px 16px -4px rgba(228, 61, 18, 0.04),
+    inset 0 1px 1px rgba(255, 255, 255, 1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-3d:hover {
+  transform: translateY(-8px) rotateX(1.5deg) scale(1.015);
+  box-shadow: 
+    0 25px 50px -12px rgba(228, 61, 18, 0.18),
+    0 0 30px rgba(239, 177, 29, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 1);
+  border-color: rgba(228, 61, 18, 0.4);
+}
+
+/* Animations */
+@keyframes float3d {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-16px) rotate(2deg) scale(1.03);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float-3d {
+  animation: float3d 5s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.shimmer-badge {
+  background: linear-gradient(90deg, rgba(228,61,18,0.05) 0%, rgba(228,61,18,0.2) 50%, rgba(228,61,18,0.05) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* Light Glass Panels & Gradients */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.08), 0 0 25px rgba(228, 61, 18, 0.06);
+}
+
+/* Custom Text Gradients */
+.gradient-text-flame {
+  background: linear-gradient(135deg, #E43D12 0%, #D6536D 50%, #991b1b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 60%, #E43D12 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-multi {
+  background: linear-gradient(135deg, #E43D12 0%, #D6536D 35%, #b45309 70%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom Background Gradients */
+.gradient-bg-primary {
+  background: linear-gradient(135deg, #E43D12 0%, #D6536D 50%, #EFB11D 100%);
+}
+
+.gradient-bg-flame {
+  background: linear-gradient(135deg, #E43D12 0%, #D6536D 100%);
+}
+
+.gradient-bg-gold {
+  background: linear-gradient(135deg, #EFB11D 0%, #d97706 100%);
+}
+
+.gradient-bg-3d {
+  background: radial-gradient(circle at 50% 0%, rgba(228, 61, 18, 0.12) 0%, rgba(239, 177, 29, 0.08) 45%, rgba(248, 250, 252, 1) 100%);
+}
+
+/* 3D Buttons */
+.btn-3d-primary {
+  position: relative;
+  background: linear-gradient(135deg, #E43D12 0%, #D6536D 60%, #EFB11D 100%);
+  color: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(228, 61, 18, 0.35), 0 0 15px rgba(239, 177, 29, 0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+}
+
+.btn-3d-primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 15px 35px -5px rgba(228, 61, 18, 0.5), 0 0 25px rgba(239, 177, 29, 0.35);
+}
+
+.btn-3d-primary:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow: 0 5px 15px -3px rgba(228, 61, 18, 0.3);
+}
+
+.btn-3d-secondary {
+  position: relative;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 1rem;
+  box-shadow: 0 6px 16px -4px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-3d-secondary:hover {
+  background: #f8fafc;
+  border-color: #E43D12;
+  color: #E43D12;
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 10px 25px -5px rgba(228, 61, 18, 0.15);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  border: 1px solid rgba(228, 61, 18, 0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E43D12;
 }
