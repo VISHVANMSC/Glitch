@@ -403,7 +403,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Re-Organized Modern Tab Navigation */}
-        <div className="bg-slate-200/80 border border-slate-300 p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto shadow-inner">
+        <div className="bg-white border-2 border-slate-300 p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto shadow-sm">
           {[
             { id: 'registrations', label: 'Registrations Review', icon: Users, badge: pendingCount > 0 ? `${pendingCount} Pending` : null },
             { id: 'problem-statements', label: 'Problem Statements & Timer', icon: FileText, badge: `${problemStatements.length} PS` },
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
 
                 <div className="space-y-4">
                   {problemStatements.map((ps) => (
-                    <div key={ps.id} className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div key={ps.id} className="p-5 rounded-2xl bg-white border-2 border-slate-300 space-y-2 shadow-xs">
                       <div className="flex items-center justify-between">
                         <span className="font-extrabold text-xs bg-white text-[#E43D12] border border-slate-300 px-2.5 py-0.5 rounded shadow-xs">
                           {ps.psNumber}
@@ -733,7 +733,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* CMS Sub-Tabs Control Pills */}
-              <div className="bg-slate-100 p-1.5 rounded-2xl border border-slate-200 flex items-center gap-1 overflow-x-auto shadow-inner">
+              <div className="bg-white p-1.5 rounded-2xl border-2 border-slate-300 flex items-center gap-1 overflow-x-auto shadow-sm">
                 {[
                   { id: 'hero', label: 'Hero & Overview', icon: Sparkles },
                   { id: 'payment', label: 'Payment & Bank', icon: CreditCard },
@@ -1080,7 +1080,7 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {coordinators.map((c) => (
-                    <div key={c.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                    <div key={c.id} className="p-4 rounded-2xl bg-white border-2 border-slate-300 flex items-center justify-between shadow-xs">
                       <div>
                         <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-white text-[#E43D12] border border-slate-300 shadow-xs">
                           {c.type}
@@ -1203,7 +1203,7 @@ export default function AdminDashboard() {
               Assign result prize tiers (First Prize, Second Prize, Third Prize, Participated) to approved hackathon teams. Results will appear automatically in team leader dashboards.
             </p>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+            <div className="p-6 rounded-2xl bg-white border-2 border-slate-300 space-y-4">
               <div className="flex items-center gap-4">
                 <span className="text-xs font-black uppercase text-black">Assign Prize Tier:</span>
                 <select

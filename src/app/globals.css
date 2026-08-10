@@ -25,6 +25,22 @@
     selection-background-color: #E43D12;
     selection-color: #ffffff;
   }
+
+  input, select, textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+  }
+
+  select option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
 }
 
 /* Visible Cyber Grid Pattern with Ambient 3D Glow */
