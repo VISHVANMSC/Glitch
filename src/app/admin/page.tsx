@@ -451,16 +451,16 @@ export default function AdminDashboard() {
                     placeholder="Search Team Name, ID, or College..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold bg-slate-50 text-slate-900 placeholder-slate-400"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-slate-300 text-xs font-extrabold bg-white text-black placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-slate-500" />
+                  <Filter className="w-4 h-4 text-slate-700" />
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-extrabold bg-slate-50 text-slate-900"
+                    className="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-extrabold bg-white text-black"
                   >
                     <option value="ALL">All Statuses</option>
                     <option value="PENDING">Pending Approval</option>
@@ -661,50 +661,50 @@ export default function AdminDashboard() {
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">PS Number (e.g. PS-04)</label>
+                  <label className="block text-xs font-black text-black mb-1">PS Number (e.g. PS-04)</label>
                   <input
                     type="text"
                     required
                     placeholder="PS-04"
                     value={newPs.psNumber}
                     onChange={(e) => setNewPs({ ...newPs, psNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
+                  <label className="block text-xs font-black text-black mb-1">Title</label>
                   <input
                     type="text"
                     required
                     placeholder="Problem Statement Title"
                     value={newPs.title}
                     onChange={(e) => setNewPs({ ...newPs, title: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
+                  <label className="block text-xs font-black text-black mb-1">Description</label>
                   <textarea
                     required
                     rows={3}
                     placeholder="Detailed problem description..."
                     value={newPs.description}
                     onChange={(e) => setNewPs({ ...newPs, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Google Drive Resource Link</label>
+                  <label className="block text-xs font-black text-black mb-1">Google Drive Resource Link</label>
                   <input
                     type="url"
                     required
                     placeholder="https://drive.google.com/..."
                     value={newPs.driveLink}
                     onChange={(e) => setNewPs({ ...newPs, driveLink: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
@@ -769,8 +769,8 @@ export default function AdminDashboard() {
                 </h4>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2 p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                    <label className="block text-xs font-extrabold uppercase text-[#E43D12]">
+                  <div className="md:col-span-2 p-4 rounded-2xl bg-white border-2 border-slate-300 space-y-2">
+                    <label className="block text-xs font-black uppercase text-[#E43D12]">
                       Website & Navbar Logo Image URL (Shown in Header & Hero Badge)
                     </label>
                     <input
@@ -778,64 +778,64 @@ export default function AdminDashboard() {
                       placeholder="e.g. https://... or /images/logo.png"
                       value={cmsContent.logoUrl || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, logoUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 text-xs font-semibold placeholder-slate-400"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                     {cmsContent.logoUrl && (
                       <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-200">
-                        <span className="text-[11px] font-bold text-slate-500">Preview:</span>
-                        <img src={cmsContent.logoUrl} alt="Logo Preview" className="w-8 h-8 object-contain rounded-full bg-white p-0.5 border border-slate-200 shadow-xs" />
+                        <span className="text-[11px] font-bold text-slate-700">Preview:</span>
+                        <img src={cmsContent.logoUrl} alt="Logo Preview" className="w-8 h-8 object-contain rounded-full bg-white p-0.5 border border-slate-300 shadow-xs" />
                       </div>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1">Hero Main Headline</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1">Hero Main Headline</label>
                     <input
                       type="text"
                       value={cmsContent.heroHeadline || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, heroHeadline: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1">Event Date Text</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1">Event Date Text</label>
                     <input
                       type="text"
                       value={cmsContent.eventDate || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, eventDate: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1">Event Time / Duration</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1">Event Time / Duration</label>
                     <input
                       type="text"
                       placeholder="e.g. 08:30 AM IST (24 Hours Live Code)"
                       value={cmsContent.eventTime || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, eventTime: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1">Venue Name & Location</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1">Venue Name & Location</label>
                     <input
                       type="text"
                       value={cmsContent.venue || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, venue: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-extrabold uppercase text-slate-700 mb-1">Hero Subtitle</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1">Hero Subtitle</label>
                     <textarea
                       rows={3}
                       value={cmsContent.heroSubtitle || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, heroSubtitle: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
                 </div>
@@ -851,7 +851,7 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-black text-black mb-1">
                       Registration Fee Display (Per Team / Per Head)
                     </label>
                     <input
@@ -859,71 +859,71 @@ export default function AdminDashboard() {
                       placeholder="e.g. ₹300 / Team or ₹100 / Head"
                       value={cmsContent.regFee || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, regFee: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">UPI ID</label>
+                    <label className="block text-xs font-black text-black mb-1">UPI ID</label>
                     <input
                       type="text"
                       placeholder="e.g. glitch10@upi"
                       value={cmsContent.upiId || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, upiId: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold font-mono focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Bank Name</label>
+                    <label className="block text-xs font-black text-black mb-1">Bank Name</label>
                     <input
                       type="text"
                       placeholder="e.g. State Bank of India"
                       value={cmsContent.bankName || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, bankName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Account Holder Name</label>
+                    <label className="block text-xs font-black text-black mb-1">Account Holder Name</label>
                     <input
                       type="text"
                       placeholder="e.g. GLITCH HACKATHON COMMITTEE"
                       value={cmsContent.bankAccountName || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, bankAccountName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Account Number</label>
+                    <label className="block text-xs font-black text-black mb-1">Account Number</label>
                     <input
                       type="text"
                       placeholder="e.g. 98765432109876"
                       value={cmsContent.bankAccountNumber || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, bankAccountNumber: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold font-mono focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">IFSC Code</label>
+                    <label className="block text-xs font-black text-black mb-1">IFSC Code</label>
                     <input
                       type="text"
                       placeholder="e.g. SBIN0001234"
                       value={cmsContent.bankIfsc || ''}
                       onChange={(e) => setCmsContent({ ...cmsContent, bankIfsc: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold font-mono focus:bg-white"
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                    <label className="block text-xs font-black text-black mb-1">
                       Payment QR Code Image (Upload Image File or Paste URL)
                     </label>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-extrabold cursor-pointer flex items-center justify-center gap-2 border border-slate-300 shrink-0 transition-colors shadow-xs">
+                      <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black cursor-pointer flex items-center justify-center gap-2 border-2 border-slate-300 shrink-0 transition-colors shadow-xs">
                         <Upload className="w-4 h-4 text-[#E43D12]" />
                         {uploadingQr ? 'Uploading QR Image...' : 'Upload QR Image File'}
                         <input
@@ -954,7 +954,7 @@ export default function AdminDashboard() {
                         placeholder="Or paste QR Code Image URL directly..."
                         value={cmsContent.qrCodeUrl || ''}
                         onChange={(e) => setCmsContent({ ...cmsContent, qrCodeUrl: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                       />
                     </div>
 
@@ -995,7 +995,7 @@ export default function AdminDashboard() {
                 </h4>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-black text-black mb-1">
                     Team & Eligibility Rules (Enter one rule per line)
                   </label>
                   <textarea
@@ -1003,12 +1003,12 @@ export default function AdminDashboard() {
                     value={cmsContent.rulesEligibility || ''}
                     onChange={(e) => setCmsContent({ ...cmsContent, rulesEligibility: e.target.value })}
                     placeholder="Team Size: Strictly 1 to 3 members per team...&#10;Institutional Uniformity: All team members..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-mono focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-black text-black mb-1">
                     Hackathon Conduct & Submission Rules (Enter one rule per line)
                   </label>
                   <textarea
@@ -1016,7 +1016,7 @@ export default function AdminDashboard() {
                     value={cmsContent.rulesConduct || ''}
                     onChange={(e) => setCmsContent({ ...cmsContent, rulesConduct: e.target.value })}
                     placeholder="Problem Statement Lock: Selection window...&#10;Originality: Fresh work only..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-mono focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
                   />
                 </div>
               </div>
@@ -1030,7 +1030,7 @@ export default function AdminDashboard() {
                 </h4>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-black text-black mb-1">
                     Day 1 Agenda Items (Format per line: Time | Event Title | Description)
                   </label>
                   <textarea
@@ -1038,12 +1038,12 @@ export default function AdminDashboard() {
                     value={cmsContent.agendaDay1 || ''}
                     onChange={(e) => setCmsContent({ ...cmsContent, agendaDay1: e.target.value })}
                     placeholder="08:30 AM | Reporting & Badge Verification | Check-in at venue&#10;09:30 AM | Inauguration | Welcome address..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-mono focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="block text-xs font-black text-black mb-1">
                     Day 2 Agenda Items (Format per line: Time | Event Title | Description)
                   </label>
                   <textarea
@@ -1051,7 +1051,7 @@ export default function AdminDashboard() {
                     value={cmsContent.agendaDay2 || ''}
                     onChange={(e) => setCmsContent({ ...cmsContent, agendaDay2: e.target.value })}
                     placeholder="09:00 AM | Final Sprint | Code freeze warning&#10;11:30 AM | Jury Presentation | Pitch to judges..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-mono focus:bg-white"
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
                   />
                 </div>
               </div>
@@ -1103,16 +1103,16 @@ export default function AdminDashboard() {
 
             {/* Add Coordinator Form */}
             <form onSubmit={handleAddCoordinator} className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
-              <h3 className="font-black text-slate-900 text-base border-b pb-2 border-slate-200">
+              <h3 className="font-black text-black text-base border-b pb-2 border-slate-200">
                 Add New Coordinator
               </h3>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Coordinator Type</label>
+                <label className="block text-xs font-black text-black mb-1">Coordinator Type</label>
                 <select
                   value={newCoord.type}
                   onChange={(e) => setNewCoord({ ...newCoord, type: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 >
                   <option value="FACULTY">Faculty Coordinator</option>
                   <option value="STUDENT">Student Coordinator</option>
@@ -1120,19 +1120,19 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Full Name</label>
+                <label className="block text-xs font-black text-black mb-1">Full Name</label>
                 <input
                   type="text"
                   required
                   placeholder="Dr. / Mr. / Ms."
                   value={newCoord.name}
                   onChange={(e) => setNewCoord({ ...newCoord, name: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-black text-black mb-1">
                   {newCoord.type === 'FACULTY' ? 'Designation' : 'Role Title'}
                 </label>
                 <input
@@ -1144,41 +1144,41 @@ export default function AdminDashboard() {
                       ? setNewCoord({ ...newCoord, designation: e.target.value })
                       : setNewCoord({ ...newCoord, role: e.target.value })
                   }
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Department</label>
+                <label className="block text-xs font-black text-black mb-1">Department</label>
                 <input
                   type="text"
                   required
                   placeholder="Computer Science Engineering"
                   value={newCoord.department}
                   onChange={(e) => setNewCoord({ ...newCoord, department: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Phone Number (Optional)</label>
+                <label className="block text-xs font-black text-black mb-1">Phone Number (Optional)</label>
                 <input
                   type="tel"
                   placeholder="+91 98765 43210"
                   value={newCoord.phone}
                   onChange={(e) => setNewCoord({ ...newCoord, phone: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Profile Photo Image URL (Optional)</label>
+                <label className="block text-xs font-black text-black mb-1">Profile Photo Image URL (Optional)</label>
                 <input
                   type="text"
                   placeholder="https://... or /images/..."
                   value={newCoord.photoUrl || ''}
                   onChange={(e) => setNewCoord({ ...newCoord, photoUrl: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold placeholder-slate-400 focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                 />
               </div>
 
@@ -1195,21 +1195,21 @@ export default function AdminDashboard() {
         {/* TAB 5: RESULT PUBLISHING */}
         {activeTab === 'results' && (
           <div className="card-3d p-6 sm:p-10 rounded-3xl bg-white border-slate-200 space-y-6 shadow-sm">
-            <h3 className="text-xl font-black text-slate-900 border-b pb-3 border-slate-200 flex items-center gap-2">
+            <h3 className="text-xl font-black text-black border-b pb-3 border-slate-200 flex items-center gap-2">
               <Trophy className="w-5 h-5 text-[#EFB11D]" /> Result Management & Announcements
             </h3>
 
-            <p className="text-xs text-slate-600 font-medium">
+            <p className="text-xs text-black font-extrabold">
               Assign result prize tiers (First Prize, Second Prize, Third Prize, Participated) to approved hackathon teams. Results will appear automatically in team leader dashboards.
             </p>
 
             <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
               <div className="flex items-center gap-4">
-                <span className="text-xs font-extrabold uppercase text-slate-700">Assign Prize Tier:</span>
+                <span className="text-xs font-black uppercase text-black">Assign Prize Tier:</span>
                 <select
                   value={assignResultTier}
                   onChange={(e) => setAssignResultTier(e.target.value)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-extrabold bg-white text-slate-900"
+                  className="px-4 py-2 rounded-xl border-2 border-slate-300 text-xs font-black bg-white text-black"
                 >
                   <option value="FIRST_PRIZE">🏆 1st Prize (Grand Champion)</option>
                   <option value="SECOND_PRIZE">🥇 2nd Prize (Runner Up)</option>
@@ -1234,7 +1234,7 @@ export default function AdminDashboard() {
 
               <div className="space-y-2">
                 {['t-1', 't-2'].map((id) => (
-                  <label key={id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 cursor-pointer hover:bg-slate-50">
+                  <label key={id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 text-xs font-black text-black cursor-pointer hover:bg-slate-50">
                     <input
                       type="checkbox"
                       onChange={(e) => {
@@ -1253,31 +1253,31 @@ export default function AdminDashboard() {
         {/* REVIEW REGISTRATION MODAL */}
         {selectedTeamModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 max-w-2xl w-full rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl text-slate-900">
+            <div className="bg-white border-2 border-slate-300 max-w-2xl w-full rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl text-black">
               <div className="flex items-center justify-between border-b pb-4 border-slate-200">
                 <div>
                   <span className="text-xs font-mono font-bold text-[#E43D12]">
                     {selectedTeamModal.teamId || 'Pending Approval'}
                   </span>
-                  <h3 className="text-xl font-black text-slate-900">{selectedTeamModal.teamName}</h3>
+                  <h3 className="text-xl font-black text-black">{selectedTeamModal.teamName}</h3>
                 </div>
-                <button onClick={() => setSelectedTeamModal(null)} className="p-2 text-slate-400 hover:text-slate-700">
+                <button onClick={() => setSelectedTeamModal(null)} className="p-2 text-slate-400 hover:text-black">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-4 text-xs">
                 <div>
-                  <h4 className="font-extrabold uppercase text-slate-500 mb-2">Team Members</h4>
+                  <h4 className="font-black uppercase text-black mb-2">Team Members</h4>
                   <div className="space-y-2">
                     {selectedTeamModal.members?.map((m: any, idx: number) => (
                       <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
                         <div>
-                          <p className="font-bold text-slate-900">{m.name} {m.isLeader && '(Leader)'}</p>
-                          <p className="text-slate-600">{m.department} • {m.year}</p>
-                          <p className="text-[#E43D12] font-semibold">{m.college}</p>
+                          <p className="font-bold text-black">{m.name} {m.isLeader && '(Leader)'}</p>
+                          <p className="text-slate-700 font-semibold">{m.department} • {m.year}</p>
+                          <p className="text-[#E43D12] font-bold">{m.college}</p>
                         </div>
-                        <div className="text-right text-slate-700">
+                        <div className="text-right text-black font-extrabold">
                           <p>{m.email}</p>
                           <p>{m.phone}</p>
                         </div>
@@ -1288,17 +1288,17 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-extrabold uppercase text-slate-500 mb-1">Transaction UTR</h4>
+                    <h4 className="font-black uppercase text-black mb-1">Transaction UTR</h4>
                     <p className="font-mono font-bold text-[#E43D12] text-sm">{selectedTeamModal.transactionUtor}</p>
                   </div>
                   <div>
-                    <h4 className="font-extrabold uppercase text-slate-500 mb-1">Payment Status</h4>
+                    <h4 className="font-black uppercase text-black mb-1">Payment Status</h4>
                     <p className="font-bold text-emerald-700 uppercase">{selectedTeamModal.status}</p>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-extrabold uppercase text-slate-500 mb-2">Uploaded Payment Proof Screenshot</h4>
+                  <h4 className="font-black uppercase text-black mb-2">Uploaded Payment Proof Screenshot</h4>
                   <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                     <img src={selectedTeamModal.paymentScreenshotUrl} alt="Receipt" className="w-full h-48 object-contain bg-slate-100" />
                   </div>
@@ -1306,13 +1306,13 @@ export default function AdminDashboard() {
 
                 {/* Rejection Reason Textarea */}
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">Rejection Reason (Required if rejecting):</label>
+                  <label className="block font-black text-black mb-1">Rejection Reason (Required if rejecting):</label>
                   <textarea
                     rows={2}
                     placeholder="e.g. Invalid payment screenshot or UTR mismatch"
                     value={rejectionReasonInput}
                     onChange={(e) => setRejectionReasonInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-medium placeholder-slate-400 focus:bg-white"
+                    className="w-full p-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
               </div>
@@ -1338,68 +1338,68 @@ export default function AdminDashboard() {
         {/* EDIT PROBLEM STATEMENT MODAL */}
         {editingPsModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-            <form onSubmit={handleUpdatePs} className="bg-white border border-slate-200 max-w-xl w-full rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl text-slate-900">
+            <form onSubmit={handleUpdatePs} className="bg-white border-2 border-slate-300 max-w-xl w-full rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl text-black">
               <div className="flex items-center justify-between border-b pb-4 border-slate-200">
-                <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+                <h3 className="text-lg font-black text-black flex items-center gap-2">
                   <Edit3 className="w-5 h-5 text-[#E43D12]" /> Edit Problem Statement
                 </h3>
-                <button type="button" onClick={() => setEditingPsModal(null)} className="p-2 text-slate-400 hover:text-slate-700">
+                <button type="button" onClick={() => setEditingPsModal(null)} className="p-2 text-slate-400 hover:text-black">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">PS Number (e.g. PS-01)</label>
+                <label className="block text-xs font-black text-black mb-1">PS Number (e.g. PS-01)</label>
                 <input
                   type="text"
                   required
                   value={editingPsModal.psNumber || ''}
                   onChange={(e) => setEditingPsModal({ ...editingPsModal, psNumber: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
+                <label className="block text-xs font-black text-black mb-1">Category</label>
                 <input
                   type="text"
                   placeholder="Artificial Intelligence, Web Dev, etc."
                   value={editingPsModal.category || ''}
                   onChange={(e) => setEditingPsModal({ ...editingPsModal, category: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Title</label>
+                <label className="block text-xs font-black text-black mb-1">Title</label>
                 <input
                   type="text"
                   required
                   value={editingPsModal.title || ''}
                   onChange={(e) => setEditingPsModal({ ...editingPsModal, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
+                <label className="block text-xs font-black text-black mb-1">Description</label>
                 <textarea
                   required
                   rows={4}
                   value={editingPsModal.description || ''}
                   onChange={(e) => setEditingPsModal({ ...editingPsModal, description: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Google Drive Resource Link</label>
+                <label className="block text-xs font-black text-black mb-1">Google Drive Resource Link</label>
                 <input
                   type="url"
                   required
                   value={editingPsModal.driveLink || ''}
                   onChange={(e) => setEditingPsModal({ ...editingPsModal, driveLink: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 text-slate-900 text-xs font-semibold focus:bg-white"
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 />
               </div>
 
@@ -1407,7 +1407,7 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => setEditingPsModal(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 text-slate-700 font-extrabold text-xs hover:bg-slate-200"
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-black font-extrabold text-xs hover:bg-slate-200"
                 >
                   Cancel
                 </button>
