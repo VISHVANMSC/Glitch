@@ -610,32 +610,32 @@ export default function RegisterPage() {
               </h2>
 
               {/* Payment Details Display Card */}
-              <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 text-white space-y-4 shadow-xl">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <span className="text-xs font-bold uppercase tracking-widest text-[#EFB11D]">Registration Fee</span>
-                  <span className="text-xl font-black text-emerald-400">{cmsContent.regFee || '₹300 / Team'}</span>
+              <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-[#E43D12]">Registration Fee</span>
+                  <span className="text-xl font-black text-emerald-700">{cmsContent.regFee || '₹300 / Team'}</span>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                  <div className="space-y-2 text-xs text-slate-300">
-                    <p><strong className="text-white">Bank Name:</strong> {cmsContent.bankName || 'State Bank of India'}</p>
-                    <p><strong className="text-white">Account Name:</strong> {cmsContent.bankAccountName || 'GLITCH HACKATHON COMMITTEE'}</p>
-                    <p><strong className="text-white">Account Number:</strong> {cmsContent.bankAccountNumber || '98765432109876'}</p>
-                    <p><strong className="text-white">IFSC Code:</strong> {cmsContent.bankIfsc || 'SBIN0001234'}</p>
-                    <p><strong className="text-white">UPI ID:</strong> <code className="bg-slate-950 px-2 py-0.5 rounded text-[#EFB11D] font-bold border border-slate-800">{cmsContent.upiId || 'glitch10@upi'}</code></p>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <p><strong className="text-slate-900">Bank Name:</strong> {cmsContent.bankName || 'State Bank of India'}</p>
+                    <p><strong className="text-slate-900">Account Name:</strong> {cmsContent.bankAccountName || 'GLITCH HACKATHON COMMITTEE'}</p>
+                    <p><strong className="text-slate-900">Account Number:</strong> {cmsContent.bankAccountNumber || '98765432109876'}</p>
+                    <p><strong className="text-slate-900">IFSC Code:</strong> {cmsContent.bankIfsc || 'SBIN0001234'}</p>
+                    <p><strong className="text-slate-900">UPI ID:</strong> <code className="bg-white px-2 py-0.5 rounded text-[#E43D12] font-bold border border-slate-300 shadow-xs">{cmsContent.upiId || 'glitch10@upi'}</code></p>
                   </div>
 
                   {/* QR Code Display */}
-                  <div className="bg-slate-950 p-4 rounded-xl text-white text-center space-y-2 border border-slate-800">
+                  <div className="bg-white p-4 rounded-xl text-slate-900 text-center space-y-2 border border-slate-200 shadow-xs">
                     {cmsContent.qrCodeUrl ? (
-                      <img src={cmsContent.qrCodeUrl} alt="Payment QR Code" className="w-36 h-36 mx-auto object-contain rounded-lg border border-slate-800 bg-white p-1" />
+                      <img src={cmsContent.qrCodeUrl} alt="Payment QR Code" className="w-36 h-36 mx-auto object-contain rounded-lg border border-slate-200 bg-white p-1" />
                     ) : (
-                      <div className="w-32 h-32 mx-auto bg-slate-900 rounded-lg flex flex-col items-center justify-center text-white text-[10px] font-mono tracking-widest border border-slate-800">
+                      <div className="w-32 h-32 mx-auto bg-slate-100 rounded-lg flex flex-col items-center justify-center text-slate-900 text-[10px] font-mono tracking-widest border border-slate-200">
                         <QrCode className="w-16 h-16 text-[#E43D12] mb-1" />
                         GLITCH - 1.0 QR
                       </div>
                     )}
-                    <p className="text-[11px] font-extrabold text-[#EFB11D]">Scan QR Code via PhonePe / GPay / Paytm</p>
+                    <p className="text-[11px] font-extrabold text-[#E43D12]">Scan QR Code via PhonePe / GPay / Paytm</p>
                   </div>
                 </div>
               </div>

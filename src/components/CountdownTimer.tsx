@@ -44,12 +44,12 @@ export default function CountdownTimer({ targetDate = '2026-10-24T09:00:00' }: C
       ].map((item, idx) => (
         <div
           key={idx}
-          className="card-3d p-3 sm:p-5 text-center border border-[#E43D12]/40 bg-slate-900/90 backdrop-blur-xl shadow-xl hover:border-[#EFB11D] group"
+          className="card-3d p-3 sm:p-5 text-center border border-slate-200 bg-white/90 backdrop-blur-xl shadow-md hover:border-[#E43D12] group transition-all"
         >
-          <div className="text-2xl sm:text-4xl font-black gradient-text-gold tracking-tight font-mono drop-shadow-[0_0_12px_rgba(239,177,29,0.3)]">
+          <div className="text-2xl sm:text-4xl font-black gradient-text-flame tracking-tight font-mono">
             {String(item.value).padStart(2, '0')}
           </div>
-          <div className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-slate-400 mt-1 group-hover:text-[#FFA2B6] transition-colors">
+          <div className="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-slate-600 mt-1 group-hover:text-[#E43D12] transition-colors">
             {item.label}
           </div>
         </div>
