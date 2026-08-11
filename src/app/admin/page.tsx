@@ -1643,23 +1643,77 @@ export default function AdminDashboard() {
                       Official Generated Team Pass (QR & Barcode)
                     </span>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white p-4 rounded-xl border border-emerald-200">
-                      <img src={selectedTeamModal.qrCodeUrl} alt="QR Pass" className="w-32 h-32 rounded-lg border border-slate-200 p-1" />
+                      <div className="text-center space-y-1">
+                        <img src={selectedTeamModal.qrCodeUrl} alt="QR Pass" className="w-32 h-32 rounded-lg border border-slate-200 p-1 mx-auto bg-white" />
+                        <span className="text-[10px] font-mono font-bold text-slate-500 block">QR Code</span>
+                      </div>
                       {selectedTeamModal.barcodeUrl && (
-                        <img src={selectedTeamModal.barcodeUrl} alt="Barcode Pass" className="w-56 h-auto" />
+                        <div className="text-center space-y-1">
+                          <img src={selectedTeamModal.barcodeUrl} alt="Barcode Pass" className="w-56 h-auto bg-white p-2 rounded-lg border border-slate-200 mx-auto" />
+                          <span className="text-[10px] font-mono font-bold text-slate-500 block">Barcode</span>
+                        </div>
                       )}
                     </div>
-                    <div className="flex items-center justify-center gap-3 pt-1">
+                    <div className="flex items-center justify-center gap-2 pt-1 flex-wrap">
+                      {selectedTeamModal.qrCodeUrl && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(selectedTeamModal.qrCodeUrl);
+                              const blob = await res.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${selectedTeamModal.teamId || 'Team'}_QR.png`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            } catch {
+                              window.open(selectedTeamModal.qrCodeUrl, '_blank');
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Download className="w-3.5 h-3.5 text-white" /> Download QR Code
+                        </button>
+                      )}
+                      {selectedTeamModal.barcodeUrl && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(selectedTeamModal.barcodeUrl);
+                              const blob = await res.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `${selectedTeamModal.teamId || 'Team'}_Barcode.png`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                            } catch {
+                              window.open(selectedTeamModal.barcodeUrl, '_blank');
+                            }
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Download className="w-3.5 h-3.5 text-white" /> Download Barcode
+                        </button>
+                      )}
                       <button
+                        type="button"
                         onClick={() => handleRegenerateQr(selectedTeamModal.id)}
                         className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-black font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                       >
                         <RefreshCw className="w-3.5 h-3.5 text-[#E43D12]" /> Regenerate Pass
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleResendEmail(selectedTeamModal.id)}
                         className="px-3 py-1.5 rounded-lg btn-3d-primary text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                       >
-                        <Mail className="w-3.5 h-3.5 text-white" /> Resend QR Email Pass
+                        <Mail className="w-3.5 h-3.5 text-white" /> Resend Email
                       </button>
                     </div>
                   </div>

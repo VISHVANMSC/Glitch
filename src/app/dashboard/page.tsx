@@ -14,6 +14,8 @@ import {
   Lock,
   Trophy,
   AlertCircle,
+  QrCode,
+  Download,
 } from 'lucide-react';
 
 export default function UserDashboard() {
@@ -382,6 +384,89 @@ export default function UserDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Official Downloadable Team Pass (QR Code & Barcode) */}
+            {isApproved && (teamData.qrCodeUrl || teamData.barcodeUrl) && (
+              <div className="card-3d p-6 rounded-3xl bg-white border-2 border-emerald-300 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <QrCode className="w-5 h-5 text-emerald-600" />
+                    <h3 className="font-black text-slate-900 text-sm">Official Team Pass</h3>
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-black uppercase">
+                    Ready
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 font-semibold">
+                  Download high-resolution PNGs to print or paste on physical team badges & event passes.
+                </p>
+
+                <div className="flex flex-col items-center justify-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  {teamData.qrCodeUrl && (
+                    <div className="text-center space-y-1">
+                      <img src={teamData.qrCodeUrl} alt="Team QR Code" className="w-36 h-36 rounded-xl border-2 border-white p-1 shadow-sm mx-auto bg-white" />
+                      <span className="text-[10px] font-mono font-bold text-slate-500 block">QR Code Pass</span>
+                    </div>
+                  )}
+                  {teamData.barcodeUrl && (
+                    <div className="text-center space-y-1 pt-2 border-t border-slate-200 w-full">
+                      <img src={teamData.barcodeUrl} alt="Team Barcode" className="w-56 h-auto bg-white p-2 rounded-xl border border-slate-200 shadow-sm mx-auto" />
+                      <span className="text-[10px] font-mono font-bold text-slate-500 block">Barcode Pass</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 pt-1">
+                  {teamData.qrCodeUrl && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(teamData.qrCodeUrl);
+                          const blob = await res.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${teamData.teamId || 'Team'}_QR.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        } catch {
+                          window.open(teamData.qrCodeUrl, '_blank');
+                        }
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
+                    >
+                      <Download className="w-4 h-4 text-white" /> Download QR Code (PNG)
+                    </button>
+                  )}
+                  {teamData.barcodeUrl && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const res = await fetch(teamData.barcodeUrl);
+                          const blob = await res.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${teamData.teamId || 'Team'}_Barcode.png`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                        } catch {
+                          window.open(teamData.barcodeUrl, '_blank');
+                        }
+                      }}
+                      className="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
+                    >
+                      <Download className="w-4 h-4 text-white" /> Download Barcode (PNG)
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Payment Proof Preview */}
             <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-3 shadow-sm">
