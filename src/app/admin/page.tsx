@@ -40,6 +40,7 @@ import {
   FileSpreadsheet,
   Activity,
   AlertTriangle,
+  Archive,
 } from 'lucide-react';
 import { uploadQrCodeImage } from '@/lib/supabase';
 
@@ -572,6 +573,14 @@ export default function AdminDashboard() {
             </a>
 
             <a
+              href="/api/admin/export/passes?type=ALL"
+              target="_blank"
+              className="px-4 py-2.5 rounded-xl border-2 border-indigo-500 bg-indigo-50 text-indigo-950 font-black text-xs flex items-center gap-2 hover:bg-indigo-100 shadow-sm cursor-pointer transition-transform hover:scale-[1.02]"
+            >
+              <Archive className="w-4 h-4 text-indigo-600" /> Bulk Passes (ZIP)
+            </a>
+
+            <a
               href="/api/admin/export?type=registrations"
               target="_blank"
               className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-black font-extrabold text-xs flex items-center gap-2 hover:bg-slate-50 shadow-sm"
@@ -688,7 +697,7 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap">
                   <span className="text-xs font-black uppercase text-black flex items-center gap-1">
                     <Filter className="w-4 h-4 text-[#E43D12]" /> Status Filter:
                   </span>
@@ -702,6 +711,25 @@ export default function AdminDashboard() {
                     <option value="APPROVED">Approved ({approvedCount})</option>
                     <option value="REJECTED">Rejected ({rejectedCount})</option>
                   </select>
+
+                  <div className="flex items-center gap-2">
+                    <a
+                      href="/api/admin/export/passes?type=ALL"
+                      target="_blank"
+                      className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-transform hover:scale-[1.02]"
+                      title="Download ZIP with all QR codes & Barcodes"
+                    >
+                      <Archive className="w-3.5 h-3.5" /> Zip All Passes
+                    </a>
+                    <a
+                      href="/api/admin/export/passes?type=QR"
+                      target="_blank"
+                      className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-xs cursor-pointer transition-transform hover:scale-[1.02]"
+                      title="Download ZIP with all team QR codes"
+                    >
+                      <QrCode className="w-3.5 h-3.5" /> Zip QRs
+                    </a>
+                  </div>
                 </div>
               </div>
 
