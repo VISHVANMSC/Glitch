@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   ADMIN
   TEAM_LEADER
+  SCANNER
 }
 
 enum RegistrationStatus {
@@ -37,17 +38,36 @@ enum CoordinatorType {
   STUDENT
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  phone        String
-  role         Role     @default(TEAM_LEADER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+enum EventType {
+  CHECK_IN
+  CHECK_OUT
+  BREAKFAST
+  LUNCH
+  REFRESHMENT
+  BREAK
+  CUSTOM
+}
 
-  teams Team[]
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  phone         String
+  role          Role     @default(TEAM_LEADER)
+  isActive      Boolean  @default(true)
+  allowedEvents String?  // JSON string array of allowed event types or IDs for scanners
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  teams             Team[]
+  scannedRecords    AttendanceRecord[] @relation("ScannerAttendance")
+  auditLogs         AuditLog[]
 }
 
 model Team {
@@ -63,6 +83,11 @@ model Team {
   transactionUtor      String
   paymentStatus        PaymentStatus      @default(PENDING)
   
+  qrCodeData           String?            @unique
+  barcodeData          String?            @unique
+  qrCodeUrl            String?            @db.Text
+  barcodeUrl           String?            @db.Text
+
   selectedPsId         String?
   selectedPs           ProblemStatement?  @relation(fields: [selectedPsId], references: [id], onDelete: SetNull)
   selectedAt           DateTime?
@@ -73,6 +98,7 @@ model Team {
   updatedAt            DateTime           @updatedAt
 
   members              TeamMember[]
+  attendanceRecords    AttendanceRecord[]
 }
 
 model TeamMember {
@@ -87,6 +113,8 @@ model TeamMember {
   department String
   year       String
   createdAt  DateTime @default(now())
+
+  attendanceRecords AttendanceRecord[]
 }
 
 model ProblemStatement {
@@ -142,3 +170,51 @@ model EmailLog {
   error     String?
   createdAt DateTime @default(now())
 }
+
+model Event {
+  id             String    @id @default(uuid())
+  name           String
+  type           EventType @default(CHECK_IN)
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean   @default(false)
+  allowDuplicate Boolean   @default(false)
+  description    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  attendanceRecords AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id        String           @id @default(uuid())
+  eventId   String
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    TeamMember       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  scannerId String
+  scanner   User             @relation("ScannerAttendance", fields: [scannerId], references: [id])
+  status    AttendanceStatus @default(PRESENT)
+  scannedAt DateTime         @default(now())
+  notes     String?
+
+  @@unique([eventId, memberId])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userEmail String?
+  userRole  String?
+  action    String
+  teamId    String?
+  memberId  String?
+  eventId   String?
+  details   String?  @db.Text
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+

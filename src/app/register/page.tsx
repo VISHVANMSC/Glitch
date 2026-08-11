@@ -31,6 +31,60 @@ interface MemberForm {
   isLeader: boolean;
 }
 
+async function compressImageIfNeeded(file: File, maxSizeBytes = 1024 * 1024): Promise<File> {
+  if (file.size <= maxSizeBytes || !file.type.startsWith('image/')) {
+    return file;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob && blob.size < file.size) {
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file);
+            }
+          },
+          'image/jpeg',
+          0.75
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -116,11 +170,19 @@ export default function RegisterPage() {
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setError('Screenshot file size must be less than 5MB.');
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (rawFile) {
+      setError('');
+      let file = rawFile;
+      if (file.size > 1 * 1024 * 1024) {
+        file = await compressImageIfNeeded(rawFile, 1 * 1024 * 1024);
+      }
+      if (file.size > 1 * 1024 * 1024) {
+        setError('Screenshot file size must be less than 1MB.');
+        e.target.value = '';
+        setPaymentFile(null);
+        setPaymentPreview('');
         return;
       }
       setPaymentFile(file);
@@ -154,13 +216,27 @@ export default function RegisterPage() {
   };
 
   const validateStep3 = () => {
+    const activeMembers = members.slice(0, teamSize);
     for (let i = 0; i < teamSize; i++) {
-      const m = members[i];
+      const m = activeMembers[i];
       if (!m.name.trim() || !m.email.trim() || !m.phone.trim() || !m.department.trim()) {
         setError(`Please fill in all mandatory fields for Member ${i + 1}.`);
         return false;
       }
     }
+
+    const emails = activeMembers.map((m) => m.email.trim().toLowerCase());
+    if (new Set(emails).size !== emails.length) {
+      setError('Each person in the team must have a unique email address.');
+      return false;
+    }
+
+    const phones = activeMembers.map((m) => m.phone.trim());
+    if (new Set(phones).size !== phones.length) {
+      setError('Each person in the team must have a unique phone number.');
+      return false;
+    }
+
     setError('');
     return true;
   };
@@ -169,6 +245,10 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!paymentFile) {
       setError('Payment proof screenshot is mandatory for verification.');
+      return;
+    }
+    if (paymentFile.size > 1 * 1024 * 1024) {
+      setError('Screenshot file size must be less than 1MB.');
       return;
     }
     if (!transactionUtor.trim() || transactionUtor.trim().length < 6) {
@@ -192,7 +272,7 @@ export default function RegisterPage() {
         members: members.slice(0, teamSize),
       };
 
-      const res = await fetch('/api/register', {
+      const res = await fetch('/api/registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -302,10 +382,10 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-2">
-                  Number of Team Members * (Strictly 1 to 3 Members)
+                  Number of Team Members * (Strictly 2 to 3 Members)
                 </label>
-                <div className="grid grid-cols-3 gap-4">
-                  {[1, 2, 3].map((size) => (
+                <div className="grid grid-cols-2 gap-4">
+                  {[2, 3].map((size) => (
                     <button
                       key={size}
                       type="button"
@@ -316,9 +396,9 @@ export default function RegisterPage() {
                           : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:text-slate-800'
                       }`}
                     >
-                      <span>{size} Member{size > 1 ? 's' : ''}</span>
+                      <span>{size} Members</span>
                       <span className="text-[10px] font-semibold text-slate-500">
-                        {size === 1 ? 'Solo Participant' : size === 2 ? 'Duo Team' : 'Trio Team'}
+                        {size === 2 ? 'Duo Team' : 'Trio Team'}
                       </span>
                     </button>
                   ))}
@@ -658,7 +738,7 @@ export default function RegisterPage() {
                     <span className="text-xs font-bold text-slate-700 block">
                       Click to upload payment screenshot (JPG, PNG)
                     </span>
-                    <span className="text-[11px] text-slate-500 block">Maximum size 5MB</span>
+                    <span className="text-[11px] text-slate-500 block">Maximum size 1MB</span>
                   </label>
                 </div>
 

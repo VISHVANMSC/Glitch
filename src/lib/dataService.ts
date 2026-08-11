@@ -1,4 +1,5 @@
 import { prisma } from './prisma';
+import { generateTeamQrAndBarcode } from './qrcode';
 
 // Memory store fallback for environments without live Postgres
 const memoryStore: {
@@ -9,15 +10,32 @@ const memoryStore: {
   selectionWindow: any;
   coordinators: any[];
   cmsContent: Record<string, string>;
+  events: any[];
+  attendanceRecords: any[];
+  auditLogs: any[];
 } = {
   users: [
     {
       id: 'admin-uuid-001',
       email: 'admin@glitch.com',
-      passwordHash: '$2a$10$e8.Z/7tH4NlhJz9QhR5Kxe49V8kYg82x1P7gW8tKxP1z5d4e3f2g1', // Admin@123456
+      passwordHash: '$2b$10$S.tEVMD93GqW8kAgvEhjvef1Qr49uRjPJb7xX.JBzPTpbJaCbcimC', // Admin@123456
       name: 'GLITCH Admin',
       phone: '+91 9876543210',
       role: 'ADMIN',
+      isActive: true,
+      allowedEvents: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 'scanner-uuid-001',
+      email: 'scanner@glitch.com',
+      passwordHash: '$2b$10$S.tEVMD93GqW8kAgvEhjvef1Qr49uRjPJb7xX.JBzPTpbJaCbcimC', // Admin@123456
+      name: 'Main Gate Scanner',
+      phone: '+91 9876543211',
+      role: 'SCANNER',
+      isActive: true,
+      allowedEvents: JSON.stringify(['CHECK_IN', 'BREAKFAST', 'LUNCH', 'REFRESHMENT', 'CHECK_OUT']),
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -121,9 +139,13 @@ const memoryStore: {
     bankAccountNumber: '98765432109876',
     bankIfsc: 'SBIN0001234',
     upiId: 'glitch10@upi',
-    regFee: '₹300 / Team',
+    regFee: '₹300 / Team (₹150 / Head)',
+    totalPrizePool: '₹1,50,000+',
+    firstPrize: '₹75,000',
+    secondPrize: '₹40,000',
+    thirdPrize: '₹25,000',
     qrCodeUrl: '',
-    rulesEligibility: `Team Size: Strictly 1 to 3 members per team. Registrations with fewer than 1 or more than 3 members will be rejected.
+    rulesEligibility: `Team Size: Strictly 2 to 3 members per team. Registrations with fewer than 2 or more than 3 members will be rejected.
 Institutional Uniformity: All team members must belong to the exact same college/institution as selected by the Team Leader.
 Single Account Registration: Only the Team Leader creates an account and logs into the platform. Separate member accounts are not required.
 Student Status: Open to all undergraduate & postgraduate engineering and technology students across India.`,
@@ -142,6 +164,34 @@ Jury Verdict: The decision of the organizing committee and evaluation jury will 
 11:30 AM | Jury Evaluation & Pitching | Live project demonstrations to judges.
 03:30 PM | Valedictory & Prize Distribution | Grand finale ceremony and winner announcements.`,
   },
+  events: [
+    {
+      id: 'event-01',
+      name: 'Main Venue Check-In',
+      type: 'CHECK_IN',
+      startDate: new Date('2026-10-24T08:00:00Z'),
+      endDate: new Date('2026-10-24T11:00:00Z'),
+      isActive: true,
+      allowDuplicate: false,
+      description: 'Official participant verification & badge issuance at entrance gate.',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: 'event-02',
+      name: 'Day 1 Lunch Sprint',
+      type: 'LUNCH',
+      startDate: new Date('2026-10-24T13:00:00Z'),
+      endDate: new Date('2026-10-24T14:30:00Z'),
+      isActive: false,
+      allowDuplicate: false,
+      description: 'Main food hall lunch scanning.',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ],
+  attendanceRecords: [],
+  auditLogs: [],
 };
 
 export const dataService = {
@@ -154,7 +204,15 @@ export const dataService = {
     }
   },
 
-  async createUser(data: { name: string; email: string; phone: string; passwordHash: string; role?: 'ADMIN' | 'TEAM_LEADER' }) {
+  async findUserById(id: string) {
+    try {
+      return await prisma.user.findUnique({ where: { id } });
+    } catch {
+      return memoryStore.users.find((u) => u.id === id) || null;
+    }
+  },
+
+  async createUser(data: { name: string; email: string; phone: string; passwordHash: string; role?: 'ADMIN' | 'TEAM_LEADER' | 'SCANNER'; allowedEvents?: string }) {
     try {
       return await prisma.user.create({
         data: {
@@ -163,6 +221,8 @@ export const dataService = {
           phone: data.phone,
           passwordHash: data.passwordHash,
           role: data.role || 'TEAM_LEADER',
+          isActive: true,
+          allowedEvents: data.allowedEvents || null,
         },
       });
     } catch {
@@ -173,11 +233,58 @@ export const dataService = {
         phone: data.phone,
         passwordHash: data.passwordHash,
         role: data.role || 'TEAM_LEADER',
+        isActive: true,
+        allowedEvents: data.allowedEvents || null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
       memoryStore.users.push(newUser);
       return newUser;
+    }
+  },
+
+  // Scanner Account Management
+  async getScanners() {
+    try {
+      return await prisma.user.findMany({
+        where: { role: 'SCANNER' },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch {
+      return memoryStore.users.filter((u) => u.role === 'SCANNER');
+    }
+  },
+
+  async updateScanner(id: string, data: { name?: string; phone?: string; allowedEvents?: string; isActive?: boolean }) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data,
+      });
+    } catch {
+      const idx = memoryStore.users.findIndex((u) => u.id === id);
+      if (idx !== -1) {
+        memoryStore.users[idx] = { ...memoryStore.users[idx], ...data, updatedAt: new Date() };
+        return memoryStore.users[idx];
+      }
+      return null;
+    }
+  },
+
+  async resetScannerPassword(id: string, passwordHash: string) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { passwordHash },
+      });
+    } catch {
+      const idx = memoryStore.users.findIndex((u) => u.id === id);
+      if (idx !== -1) {
+        memoryStore.users[idx].passwordHash = passwordHash;
+        memoryStore.users[idx].updatedAt = new Date();
+        return memoryStore.users[idx];
+      }
+      return null;
     }
   },
 
@@ -210,6 +317,123 @@ export const dataService = {
         const selectedPs = memoryStore.problemStatements.find((p) => p.id === t.selectedPsId) || null;
         return { ...t, leader, members, selectedPs };
       });
+    }
+  },
+
+  async checkUniqueMembers(
+    members: Array<{ email: string; phone: string; name?: string }>,
+    currentLeaderId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      for (const m of members) {
+        const emailLower = m.email.trim().toLowerCase();
+        const phoneTrim = m.phone.trim();
+
+        const existingUser = await prisma.user.findFirst({
+          where: {
+            email: { equals: emailLower, mode: 'insensitive' },
+            id: { not: currentLeaderId },
+          },
+        });
+        if (existingUser) {
+          return {
+            success: false,
+            error: `Email address "${m.email}" is already registered by another account.`,
+          };
+        }
+
+        const existingUserPhone = await prisma.user.findFirst({
+          where: {
+            phone: phoneTrim,
+            id: { not: currentLeaderId },
+          },
+        });
+        if (existingUserPhone) {
+          return {
+            success: false,
+            error: `Phone number "${m.phone}" is already registered by another account.`,
+          };
+        }
+
+        const existingMemberEmail = await prisma.teamMember.findFirst({
+          where: {
+            email: { equals: emailLower, mode: 'insensitive' },
+            team: { leaderId: { not: currentLeaderId } },
+          },
+        });
+        if (existingMemberEmail) {
+          return {
+            success: false,
+            error: `Email address "${m.email}" is already registered with another team.`,
+          };
+        }
+
+        const existingMemberPhone = await prisma.teamMember.findFirst({
+          where: {
+            phone: phoneTrim,
+            team: { leaderId: { not: currentLeaderId } },
+          },
+        });
+        if (existingMemberPhone) {
+          return {
+            success: false,
+            error: `Phone number "${m.phone}" is already registered with another team.`,
+          };
+        }
+      }
+      return { success: true };
+    } catch {
+      for (const m of members) {
+        const emailLower = m.email.trim().toLowerCase();
+        const phoneTrim = m.phone.trim();
+
+        const existingUser = memoryStore.users.find(
+          (u) => u.email.toLowerCase() === emailLower && u.id !== currentLeaderId
+        );
+        if (existingUser) {
+          return {
+            success: false,
+            error: `Email address "${m.email}" is already registered by another account.`,
+          };
+        }
+
+        const existingUserPhone = memoryStore.users.find(
+          (u) => u.phone === phoneTrim && u.id !== currentLeaderId
+        );
+        if (existingUserPhone) {
+          return {
+            success: false,
+            error: `Phone number "${m.phone}" is already registered by another account.`,
+          };
+        }
+
+        const existingMemberEmail = memoryStore.teamMembers.find(
+          (tm) => tm.email.toLowerCase() === emailLower
+        );
+        if (existingMemberEmail) {
+          const team = memoryStore.teams.find((t) => t.id === existingMemberEmail.teamId);
+          if (!team || team.leaderId !== currentLeaderId) {
+            return {
+              success: false,
+              error: `Email address "${m.email}" is already registered with another team.`,
+            };
+          }
+        }
+
+        const existingMemberPhone = memoryStore.teamMembers.find(
+          (tm) => tm.phone === phoneTrim
+        );
+        if (existingMemberPhone) {
+          const team = memoryStore.teams.find((t) => t.id === existingMemberPhone.teamId);
+          if (!team || team.leaderId !== currentLeaderId) {
+            return {
+              success: false,
+              error: `Phone number "${m.phone}" is already registered with another team.`,
+            };
+          }
+        }
+      }
+      return { success: true };
     }
   },
 
@@ -256,6 +480,10 @@ export const dataService = {
         paymentScreenshotUrl: data.paymentScreenshotUrl,
         transactionUtor: data.transactionUtor,
         paymentStatus: 'PENDING',
+        qrCodeData: null,
+        barcodeData: null,
+        qrCodeUrl: null,
+        barcodeUrl: null,
         selectedPsId: null,
         selectedAt: null,
         result: 'NONE',
@@ -277,7 +505,6 @@ export const dataService = {
   },
 
   async approveTeam(teamDbId: string) {
-    // Generate GL-01, GL-02 format
     let assignedTeamId = 'GL-01';
     try {
       const approvedCount = await prisma.team.count({
@@ -286,20 +513,31 @@ export const dataService = {
       const nextNum = approvedCount + 1;
       assignedTeamId = `GL-${nextNum < 10 ? '0' + nextNum : nextNum}`;
 
-      return await prisma.team.update({
+      // Generate unique QR & Barcode
+      const qrBarcode = await generateTeamQrAndBarcode(assignedTeamId);
+
+      const updated = await prisma.team.update({
         where: { id: teamDbId },
         data: {
           status: 'APPROVED',
           paymentStatus: 'VERIFIED',
           teamId: assignedTeamId,
           rejectionReason: null,
+          qrCodeData: qrBarcode.qrCodeData,
+          barcodeData: qrBarcode.barcodeData,
+          qrCodeUrl: qrBarcode.qrCodeUrl,
+          barcodeUrl: qrBarcode.barcodeUrl,
         },
         include: { leader: true, members: true },
       });
+
+      return updated;
     } catch {
       const approvedTeams = memoryStore.teams.filter((t) => t.status === 'APPROVED');
       const nextNum = approvedTeams.length + 1;
       assignedTeamId = `GL-${nextNum < 10 ? '0' + nextNum : nextNum}`;
+
+      const qrBarcode = await generateTeamQrAndBarcode(assignedTeamId);
 
       const index = memoryStore.teams.findIndex((t) => t.id === teamDbId);
       if (index !== -1) {
@@ -307,11 +545,48 @@ export const dataService = {
         memoryStore.teams[index].paymentStatus = 'VERIFIED';
         memoryStore.teams[index].teamId = assignedTeamId;
         memoryStore.teams[index].rejectionReason = null;
+        memoryStore.teams[index].qrCodeData = qrBarcode.qrCodeData;
+        memoryStore.teams[index].barcodeData = qrBarcode.barcodeData;
+        memoryStore.teams[index].qrCodeUrl = qrBarcode.qrCodeUrl;
+        memoryStore.teams[index].barcodeUrl = qrBarcode.barcodeUrl;
         const leader = memoryStore.users.find((u) => u.id === memoryStore.teams[index].leaderId);
         const members = memoryStore.teamMembers.filter((m) => m.teamId === teamDbId);
         return { ...memoryStore.teams[index], leader, members };
       }
       return null;
+    }
+  },
+
+  async regenerateTeamQr(teamDbId: string) {
+    try {
+      const team = await prisma.team.findUnique({ where: { id: teamDbId } });
+      if (!team || !team.teamId) throw new Error('Team or Team ID not found');
+
+      const qrBarcode = await generateTeamQrAndBarcode(team.teamId);
+
+      return await prisma.team.update({
+        where: { id: teamDbId },
+        data: {
+          qrCodeData: qrBarcode.qrCodeData,
+          barcodeData: qrBarcode.barcodeData,
+          qrCodeUrl: qrBarcode.qrCodeUrl,
+          barcodeUrl: qrBarcode.barcodeUrl,
+        },
+        include: { leader: true, members: true },
+      });
+    } catch {
+      const team = memoryStore.teams.find((t) => t.id === teamDbId);
+      if (!team || !team.teamId) return null;
+
+      const qrBarcode = await generateTeamQrAndBarcode(team.teamId);
+      team.qrCodeData = qrBarcode.qrCodeData;
+      team.barcodeData = qrBarcode.barcodeData;
+      team.qrCodeUrl = qrBarcode.qrCodeUrl;
+      team.barcodeUrl = qrBarcode.barcodeUrl;
+
+      const leader = memoryStore.users.find((u) => u.id === team.leaderId);
+      const members = memoryStore.teamMembers.filter((m) => m.teamId === teamDbId);
+      return { ...team, leader, members };
     }
   },
 
@@ -576,4 +851,298 @@ export const dataService = {
     }
     return memoryStore.cmsContent;
   },
+
+  // Event Management
+  async getEvents() {
+    try {
+      return await prisma.event.findMany({ orderBy: { startDate: 'asc' } });
+    } catch {
+      return memoryStore.events;
+    }
+  },
+
+  async getActiveEvents() {
+    try {
+      return await prisma.event.findMany({ where: { isActive: true } });
+    } catch {
+      return memoryStore.events.filter((e) => e.isActive);
+    }
+  },
+
+  async createEvent(data: {
+    name: string;
+    type: 'CHECK_IN' | 'CHECK_OUT' | 'BREAKFAST' | 'LUNCH' | 'REFRESHMENT' | 'BREAK' | 'CUSTOM';
+    startDate: Date;
+    endDate: Date;
+    isActive?: boolean;
+    allowDuplicate?: boolean;
+    description?: string;
+  }) {
+    try {
+      return await prisma.event.create({
+        data: {
+          name: data.name,
+          type: data.type,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          isActive: data.isActive || false,
+          allowDuplicate: data.allowDuplicate || false,
+          description: data.description || null,
+        },
+      });
+    } catch {
+      const newEvt = {
+        id: `evt-${Date.now()}`,
+        name: data.name,
+        type: data.type,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        isActive: data.isActive || false,
+        allowDuplicate: data.allowDuplicate || false,
+        description: data.description || null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      memoryStore.events.push(newEvt);
+      return newEvt;
+    }
+  },
+
+  async updateEvent(id: string, data: any) {
+    try {
+      return await prisma.event.update({ where: { id }, data });
+    } catch {
+      const idx = memoryStore.events.findIndex((e) => e.id === id);
+      if (idx !== -1) {
+        memoryStore.events[idx] = { ...memoryStore.events[idx], ...data, updatedAt: new Date() };
+        return memoryStore.events[idx];
+      }
+      return null;
+    }
+  },
+
+  async toggleEventActive(id: string, isActive: boolean) {
+    try {
+      return await prisma.event.update({ where: { id }, data: { isActive } });
+    } catch {
+      const idx = memoryStore.events.findIndex((e) => e.id === id);
+      if (idx !== -1) {
+        memoryStore.events[idx].isActive = isActive;
+        memoryStore.events[idx].updatedAt = new Date();
+        return memoryStore.events[idx];
+      }
+      return null;
+    }
+  },
+
+  async deleteEvent(id: string) {
+    try {
+      return await prisma.event.delete({ where: { id } });
+    } catch {
+      memoryStore.events = memoryStore.events.filter((e) => e.id !== id);
+      return { id };
+    }
+  },
+
+  // Scanning & Attendance Logic
+  async findTeamByCode(code: string) {
+    const query = code.trim().toUpperCase();
+    // Handle formats like "GLITCH-TEAM:GL-01", "GL-01", "GL2026001", or UUID
+    let targetTeamId = query;
+    if (query.startsWith('GLITCH-TEAM:')) {
+      targetTeamId = query.replace('GLITCH-TEAM:', '').trim();
+    }
+
+    try {
+      const team = await prisma.team.findFirst({
+        where: {
+          OR: [
+            { teamId: targetTeamId },
+            { id: targetTeamId },
+            { qrCodeData: query },
+            { barcodeData: query },
+            { teamName: { equals: query, mode: 'insensitive' } },
+          ],
+        },
+        include: { members: true, leader: true },
+      });
+      return team;
+    } catch {
+      const team = memoryStore.teams.find(
+        (t) =>
+          t.teamId === targetTeamId ||
+          t.id === targetTeamId ||
+          t.qrCodeData === query ||
+          t.barcodeData === query ||
+          t.teamName?.toUpperCase() === query
+      );
+      if (!team) return null;
+      const members = memoryStore.teamMembers.filter((m) => m.teamId === team.id);
+      const leader = memoryStore.users.find((u) => u.id === team.leaderId);
+      return { ...team, members, leader };
+    }
+  },
+
+  async checkDuplicateAttendance(eventId: string, memberIds: string[]) {
+    try {
+      const records = await prisma.attendanceRecord.findMany({
+        where: {
+          eventId,
+          memberId: { in: memberIds },
+        },
+      });
+      return records;
+    } catch {
+      return memoryStore.attendanceRecords.filter(
+        (r) => r.eventId === eventId && memberIds.includes(r.memberId)
+      );
+    }
+  },
+
+  async recordAttendance(data: {
+    eventId: string;
+    teamId: string;
+    memberSelections: Array<{ memberId: string; present: boolean }>;
+    scannerId: string;
+    notes?: string;
+  }) {
+    const savedRecords: any[] = [];
+    const event = await (async () => {
+      try {
+        return await prisma.event.findUnique({ where: { id: data.eventId } });
+      } catch {
+        return memoryStore.events.find((e) => e.id === data.eventId);
+      }
+    })();
+
+    if (!event) throw new Error('Active scanning event not found');
+
+    for (const sel of data.memberSelections) {
+      const status = sel.present ? 'PRESENT' : 'ABSENT';
+      try {
+        if (!event.allowDuplicate) {
+          // Upsert attendance record to handle retry or re-scanning gracefully
+          const rec = await prisma.attendanceRecord.upsert({
+            where: {
+              eventId_memberId: {
+                eventId: data.eventId,
+                memberId: sel.memberId,
+              },
+            },
+            create: {
+              eventId: data.eventId,
+              teamId: data.teamId,
+              memberId: sel.memberId,
+              scannerId: data.scannerId,
+              status,
+              notes: data.notes || null,
+            },
+            update: {
+              status,
+              scannedAt: new Date(),
+              scannerId: data.scannerId,
+              notes: data.notes || null,
+            },
+          });
+          savedRecords.push(rec);
+        } else {
+          const rec = await prisma.attendanceRecord.create({
+            data: {
+              eventId: data.eventId,
+              teamId: data.teamId,
+              memberId: sel.memberId,
+              scannerId: data.scannerId,
+              status,
+              notes: data.notes || null,
+            },
+          });
+          savedRecords.push(rec);
+        }
+      } catch {
+        // Memory fallback
+        const existingIdx = memoryStore.attendanceRecords.findIndex(
+          (r) => r.eventId === data.eventId && r.memberId === sel.memberId
+        );
+        const recordObj = {
+          id: `att-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          eventId: data.eventId,
+          teamId: data.teamId,
+          memberId: sel.memberId,
+          scannerId: data.scannerId,
+          status,
+          scannedAt: new Date(),
+          notes: data.notes || null,
+        };
+
+        if (existingIdx !== -1 && !event.allowDuplicate) {
+          memoryStore.attendanceRecords[existingIdx] = recordObj;
+          savedRecords.push(recordObj);
+        } else {
+          memoryStore.attendanceRecords.push(recordObj);
+          savedRecords.push(recordObj);
+        }
+      }
+    }
+    return savedRecords;
+  },
+
+  async getAllAttendanceRecords() {
+    try {
+      return await prisma.attendanceRecord.findMany({
+        include: {
+          event: true,
+          team: true,
+          member: true,
+          scanner: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { scannedAt: 'desc' },
+      });
+    } catch {
+      return memoryStore.attendanceRecords.map((r) => {
+        const event = memoryStore.events.find((e) => e.id === r.eventId);
+        const team = memoryStore.teams.find((t) => t.id === r.teamId);
+        const member = memoryStore.teamMembers.find((m) => m.id === r.memberId);
+        const scanner = memoryStore.users.find((u) => u.id === r.scannerId);
+        return { ...r, event, team, member, scanner };
+      });
+    }
+  },
+
+  // Audit Logs
+  async logAudit(data: {
+    userId?: string;
+    userEmail?: string;
+    userRole?: string;
+    action: string;
+    teamId?: string;
+    memberId?: string;
+    eventId?: string;
+    details?: string;
+    ipAddress?: string;
+  }) {
+    try {
+      return await prisma.auditLog.create({ data });
+    } catch {
+      const entry = {
+        id: `audit-${Date.now()}`,
+        ...data,
+        createdAt: new Date(),
+      };
+      memoryStore.auditLogs.unshift(entry);
+      return entry;
+    }
+  },
+
+  async getAuditLogs() {
+    try {
+      return await prisma.auditLog.findMany({
+        include: { user: { select: { id: true, name: true, email: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+    } catch {
+      return memoryStore.auditLogs.slice(0, 100);
+    }
+  },
 };
+

@@ -27,9 +27,21 @@ import {
   Bot,
 } from 'lucide-react';
 
+import { redirect } from 'next/navigation';
+import { getSessionUser } from '@/lib/auth';
+
 export const revalidate = 0;
 
 export default async function LandingPage() {
+  const sessionUser = await getSessionUser();
+  if (sessionUser) {
+    if (sessionUser.role === 'ADMIN') {
+      redirect('/admin');
+    } else {
+      redirect('/dashboard');
+    }
+  }
+
   const cms = await dataService.getCmsContent();
   const coordinators = await dataService.getCoordinators();
 
@@ -108,7 +120,7 @@ export default async function LandingPage() {
                     <Bot className="w-4 h-4 text-[#E43D12]" /> Glitchy Says:
                   </div>
                   <p className="text-xs text-slate-700 font-bold">
-                    "Ready to code, innovate, and win ₹1,50,000+ prizes? Join teams from across India!"
+                    "Ready to code, innovate, and win {cms.totalPrizePool || '₹1,50,000+'} prizes? Join teams from across India!"
                   </p>
                 </div>
               </div>
@@ -121,7 +133,7 @@ export default async function LandingPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl gradient-bg-gold text-slate-950 flex items-center justify-center mb-3 shadow-md">
                 <Trophy className="w-6 h-6 text-slate-950" />
               </div>
-              <div className="text-3xl font-black gradient-text-gold">₹1,50,000+</div>
+              <div className="text-3xl font-black gradient-text-gold">{cms.totalPrizePool || '₹1,50,000+'}</div>
               <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Grand Prize Pool</div>
             </div>
 
@@ -137,7 +149,7 @@ export default async function LandingPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-[#D6536D] text-white flex items-center justify-center mb-3 shadow-md">
                 <Layers className="w-6 h-6" />
               </div>
-              <div className="text-3xl font-black text-[#D6536D]">1-3 Members</div>
+              <div className="text-3xl font-black text-[#D6536D]">2-3 Members</div>
               <div className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1">Team Size</div>
             </div>
           </div>
@@ -184,7 +196,7 @@ export default async function LandingPage() {
               <Users className="w-5 h-5" />
               <span className="text-xs font-black uppercase tracking-widest text-slate-500">Team Size</span>
             </div>
-            <p className="font-black text-slate-900 text-sm sm:text-base">1 to 3 Members</p>
+            <p className="font-black text-slate-900 text-sm sm:text-base">2 to 3 Members</p>
           </div>
         </div>
       </section>
@@ -209,7 +221,7 @@ export default async function LandingPage() {
 
               <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="p-6 rounded-2xl card-3d bg-white border-slate-200">
-                  <div className="text-3xl font-black gradient-text-gold">₹1,50,000+</div>
+                  <div className="text-3xl font-black gradient-text-gold">{cms.totalPrizePool || '₹1,50,000+'}</div>
                   <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Grand Prize Pool</div>
                 </div>
                 <div className="p-6 rounded-2xl card-3d bg-white border-slate-200">
@@ -278,7 +290,7 @@ export default async function LandingPage() {
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest text-[#D6536D]">Runner Up</span>
                 <h3 className="text-2xl font-black text-slate-900 mt-1">2nd Prize</h3>
-                <div className="text-3xl font-black text-[#D6536D] my-4">₹40,000</div>
+                <div className="text-3xl font-black text-[#D6536D] my-4">{cms.secondPrize || '₹40,000'}</div>
                 <p className="text-xs text-slate-600 font-medium">
                   Silver Trophy + Certificates of Excellence + Winner Badges
                 </p>
@@ -296,7 +308,7 @@ export default async function LandingPage() {
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest text-[#b45309]">Overall Winner</span>
                 <h3 className="text-3xl font-black text-slate-900 mt-1">1st Prize</h3>
-                <div className="text-4xl font-black gradient-text-gold my-4">₹75,000</div>
+                <div className="text-4xl font-black gradient-text-gold my-4">{cms.firstPrize || '₹75,000'}</div>
                 <p className="text-xs text-slate-700 font-bold">
                   Grand Champion Trophy + Gold Medals + National Winner Certificate
                 </p>
@@ -311,7 +323,7 @@ export default async function LandingPage() {
                 </div>
                 <span className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Second Runner Up</span>
                 <h3 className="text-2xl font-black text-slate-900 mt-1">3rd Prize</h3>
-                <div className="text-3xl font-black text-[#E43D12] my-4">₹25,000</div>
+                <div className="text-3xl font-black text-[#E43D12] my-4">{cms.thirdPrize || '₹25,000'}</div>
                 <p className="text-xs text-slate-600 font-medium">
                   Bronze Trophy + Merit Certificates + Recognition Badges
                 </p>
@@ -346,7 +358,7 @@ export default async function LandingPage() {
                 {(cms.rulesEligibility
                   ? cms.rulesEligibility.split('\n').map((l: string) => l.trim()).filter(Boolean)
                   : [
-                      'Team Size: Strictly 1 to 3 members per team. Registrations with fewer than 1 or more than 3 members will be rejected.',
+                      'Team Size: Strictly 2 to 3 members per team. Registrations with fewer than 2 or more than 3 members will be rejected.',
                       'Institutional Uniformity: All team members must belong to the exact same college/institution as selected by the Team Leader.',
                       'Single Account Registration: Only the Team Leader creates an account and logs into the platform. Separate member accounts are not required.',
                       'Student Status: Open to all undergraduate & postgraduate engineering and technology students across India.',

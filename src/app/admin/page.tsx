@@ -33,6 +33,13 @@ import {
   CreditCard,
   Calendar,
   ShieldAlert,
+  QrCode,
+  Zap,
+  Mail,
+  RefreshCw,
+  FileSpreadsheet,
+  Activity,
+  AlertTriangle,
 } from 'lucide-react';
 import { uploadQrCodeImage } from '@/lib/supabase';
 
@@ -40,7 +47,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [adminUser, setAdminUser] = useState<any>(null);
 
-  // Active Tab: 'registrations' | 'cms' | 'coordinators' | 'problem-statements' | 'results'
+  // Active Tab: 'registrations' | 'attendance' | 'events' | 'scanners' | 'audit' | 'problem-statements' | 'results' | 'coordinators' | 'cms'
   const [activeTab, setActiveTab] = useState('registrations');
 
   // Registrations & Search/Filter
@@ -49,6 +56,39 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedTeamModal, setSelectedTeamModal] = useState<any>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+
+  // Attendance Dashboard State
+  const [attendanceData, setAttendanceData] = useState<any>(null);
+  const [manualCorrectionModal, setManualCorrectionModal] = useState<any>(null);
+  const [manualStatusInput, setManualStatusInput] = useState<'PRESENT' | 'ABSENT'>('PRESENT');
+  const [manualNoteInput, setManualNoteInput] = useState('');
+
+  // Events State
+  const [events, setEvents] = useState<any[]>([]);
+  const [newEventModal, setNewEventModal] = useState(false);
+  const [newEventForm, setNewEventForm] = useState({
+    name: '',
+    type: 'CHECK_IN',
+    startDate: '',
+    endDate: '',
+    isActive: true,
+    allowDuplicate: false,
+    description: '',
+  });
+
+  // Scanners State
+  const [scanners, setScanners] = useState<any[]>([]);
+  const [newScannerModal, setNewScannerModal] = useState(false);
+  const [newScannerForm, setNewScannerForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    allowedEvents: ['CHECK_IN', 'BREAKFAST', 'LUNCH', 'REFRESHMENT', 'CHECK_OUT'],
+  });
+
+  // Audit Logs State
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   // CMS Form State
   const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
@@ -116,8 +156,30 @@ export default function AdminDashboard() {
       const psData = await psRes.json();
       setProblemStatements(psData.problemStatements || []);
       setSelectionWindow(psData.selectionWindow || null);
+
+      // Fetch Attendance, Events, Scanners, and Audit Logs
+      try {
+        const attRes = await fetch('/api/admin/attendance');
+        const attData = await attRes.json();
+        setAttendanceData(attData);
+
+        const evtRes = await fetch('/api/admin/events');
+        const evtData = await evtRes.json();
+        setEvents(evtData.events || []);
+
+        const scnRes = await fetch('/api/admin/scanners');
+        const scnData = await scnRes.json();
+        setScanners(scnData.scanners || []);
+
+        const auditRes = await fetch('/api/admin/audit-logs');
+        const auditData = await auditRes.json();
+        setAuditLogs(auditData.auditLogs || []);
+      } catch (err) {
+        console.error('Additional scanning data load error', err);
+      }
     } catch (err) {
       console.error(err);
+      setError('Failed to fetch admin data');
     } finally {
       setLoading(false);
     }
@@ -141,7 +203,7 @@ export default function AdminDashboard() {
       if (!res.ok) throw new Error(data.error || 'Approval failed');
       setMessage(data.message);
       setSelectedTeamModal(null);
-      window.location.reload();
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -166,7 +228,151 @@ export default function AdminDashboard() {
       setMessage(data.message);
       setSelectedTeamModal(null);
       setRejectionReasonInput('');
-      window.location.reload();
+      fetchAdminData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Regenerate Team QR Code & Barcode
+  const handleRegenerateQr = async (teamDbId: string) => {
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/registrations/regenerate-qr', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamDbId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'QR regeneration failed');
+      setMessage(data.message);
+      if (selectedTeamModal && selectedTeamModal.id === teamDbId) {
+        setSelectedTeamModal(data.team);
+      }
+      fetchAdminData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Resend QR & Approval Email
+  const handleResendEmail = async (teamDbId: string) => {
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/emails/resend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ teamDbId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Resend email failed');
+      setMessage(data.message);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Create Scanner User
+  const handleCreateScanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/scanners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newScannerForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create scanner');
+      setMessage(data.message);
+      setNewScannerModal(false);
+      setNewScannerForm({
+        name: '',
+        email: '',
+        phone: '',
+        password: '',
+        allowedEvents: ['CHECK_IN', 'BREAKFAST', 'LUNCH', 'REFRESHMENT', 'CHECK_OUT'],
+      });
+      fetchAdminData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Toggle Scanner Active
+  const handleToggleScannerActive = async (scannerId: string, currentActive: boolean) => {
+    try {
+      const res = await fetch('/api/admin/scanners', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: scannerId, isActive: !currentActive }),
+      });
+      if (res.ok) fetchAdminData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Create Event Schedule
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEventForm),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to create event');
+      setMessage(data.message);
+      setNewEventModal(false);
+      fetchAdminData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // Toggle Event Active State
+  const handleToggleEventActive = async (eventId: string, currentActive: boolean) => {
+    try {
+      const res = await fetch('/api/admin/events', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: eventId, isActive: !currentActive }),
+      });
+      if (res.ok) fetchAdminData();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Manual Attendance Correction
+  const handleSaveManualAttendance = async () => {
+    if (!manualCorrectionModal) return;
+    setMessage('');
+    setError('');
+    try {
+      const res = await fetch('/api/admin/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: manualCorrectionModal.eventId,
+          teamId: manualCorrectionModal.teamId,
+          memberId: manualCorrectionModal.memberId,
+          status: manualStatusInput,
+          notes: manualNoteInput,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Manual override failed');
+      setMessage(data.message);
+      setManualCorrectionModal(null);
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -197,6 +403,8 @@ export default function AdminDashboard() {
   // Handler: Add Coordinator
   const handleAddCoordinator = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+    setMessage('');
     try {
       const res = await fetch('/api/admin/coordinators', {
         method: 'POST',
@@ -204,10 +412,19 @@ export default function AdminDashboard() {
         body: JSON.stringify(newCoord),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setCoordinators([...coordinators, data.coordinator]);
-      setNewCoord({ type: 'FACULTY', name: '', designation: '', role: '', department: '', phone: '', email: '', photoUrl: '' });
-      setMessage('Coordinator added successfully.');
+      if (!res.ok) throw new Error(data.error || 'Failed to add coordinator');
+      setMessage('Coordinator added successfully');
+      setNewCoord({
+        type: 'FACULTY',
+        name: '',
+        designation: '',
+        role: '',
+        department: '',
+        phone: '',
+        email: '',
+        photoUrl: '',
+      });
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -215,16 +432,19 @@ export default function AdminDashboard() {
 
   // Handler: Delete Coordinator
   const handleDeleteCoordinator = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this coordinator?')) return;
     try {
-      await fetch(`/api/admin/coordinators?id=${id}`, { method: 'DELETE' });
-      setCoordinators(coordinators.filter((c) => c.id !== id));
+      const res = await fetch(`/api/admin/coordinators?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      setMessage('Coordinator removed');
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
   };
 
-  // Handler: Add Problem Statement
-  const handleAddPs = async (e: React.FormEvent) => {
+  // Handler: Create Problem Statement
+  const handleCreatePs = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await fetch('/api/admin/problem-statements', {
@@ -233,10 +453,10 @@ export default function AdminDashboard() {
         body: JSON.stringify(newPs),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProblemStatements([...problemStatements, data.problemStatement]);
+      if (!res.ok) throw new Error(data.error || 'Failed to create PS');
+      setMessage('Problem statement added successfully');
       setNewPs({ psNumber: '', title: '', description: '', category: 'Software & AI', driveLink: '' });
-      setMessage('Problem statement published.');
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -253,12 +473,10 @@ export default function AdminDashboard() {
         body: JSON.stringify(editingPsModal),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProblemStatements(
-        problemStatements.map((p) => (p.id === editingPsModal.id ? data.problemStatement : p))
-      );
+      if (!res.ok) throw new Error(data.error || 'Failed to update PS');
+      setMessage('Problem statement updated');
       setEditingPsModal(null);
-      setMessage('Problem statement updated successfully.');
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -266,34 +484,29 @@ export default function AdminDashboard() {
 
   // Handler: Delete Problem Statement
   const handleDeletePs = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this problem statement?')) return;
+    if (!confirm('Delete this problem statement?')) return;
     try {
       const res = await fetch(`/api/admin/problem-statements?id=${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setProblemStatements(problemStatements.filter((p) => p.id !== id));
-      setMessage('Problem statement deleted successfully.');
+      if (!res.ok) throw new Error('Failed to delete PS');
+      setMessage('Problem statement deleted');
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
   };
 
   // Handler: Toggle Selection Window Timer
-  const handleToggleWindow = async (isOpen: boolean) => {
+  const handleToggleTimerWindow = async (isOpen: boolean) => {
     try {
       const res = await fetch('/api/admin/problem-statements', {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'set_window',
-          isOpen,
-          durationMinutes: timerMinutes,
-        }),
+        body: JSON.stringify({ isOpen, durationMinutes: timerMinutes }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setSelectionWindow(data.window);
-      setMessage(`Selection window ${isOpen ? 'OPENED' : 'CLOSED'}`);
+      if (!res.ok) throw new Error(data.error || 'Failed to toggle selection window');
+      setMessage(data.message);
+      fetchAdminData();
     } catch (err: any) {
       setError(err.message);
     }
@@ -301,61 +514,77 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
-        <div className="text-center space-y-3">
-          <div className="w-12 h-12 rounded-full border-4 border-[#E43D12] border-t-transparent animate-spin mx-auto" />
-          <p className="text-sm font-black uppercase tracking-widest text-[#E43D12]">Loading Admin Command Center...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] text-black font-black">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 border-4 border-[#E43D12] border-t-transparent rounded-full animate-spin" />
+          <span>Loading GLITCH Admin Command Center...</span>
         </div>
       </div>
     );
   }
 
+  // Analytics counts
   const totalTeamsCount = teams.length;
   const pendingCount = teams.filter((t) => t.status === 'PENDING').length;
   const approvedCount = teams.filter((t) => t.status === 'APPROVED').length;
   const rejectedCount = teams.filter((t) => t.status === 'REJECTED').length;
-  const totalParticipantsCount = teams.reduce((acc, t) => acc + (t.members?.length || t.teamSize || 0), 0);
+  const totalParticipantsCount = teams.reduce((acc, t) => acc + (t.members?.length || t.teamSize), 0);
+
+  // Filtered teams list
+  const filteredTeams = teams.filter((t) => {
+    const matchesSearch =
+      t.teamName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (t.teamId && t.teamId.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      t.leader?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.leader?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.transactionUtor.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (statusFilter === 'ALL') return matchesSearch;
+    return matchesSearch && t.status === statusFilter;
+  });
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 bg-cyber-grid">
-      <Navbar user={adminUser} />
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] bg-cyber-grid text-black">
+      <Navbar />
 
-      <main className="flex-1 pt-28 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full space-y-8">
-        {/* Header Title & Dual Export Buttons */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b pb-6 border-slate-200">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md shrink-0">
-              <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
-                <img src="/images/mascot_3d.png" alt="Glitchy" className="w-10 h-10 object-contain" />
-              </div>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 pt-28 sm:pt-32 pb-12 space-y-8">
+        {/* Admin Header Title */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b-2 border-slate-300 pb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-wider mb-2">
+              <ShieldCheck className="w-4 h-4 text-[#E43D12]" /> Master Admin Control Center
             </div>
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest mb-1">
-                <ShieldCheck className="w-4 h-4 text-[#E43D12]" /> Admin Command Center
-              </div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-                GLITCH - 1.0 Hackathon Management
-              </h1>
-              <p className="text-xs text-slate-600 font-semibold">
-                Review team registrations, manage problem statement selection timers, edit CMS, and publish results.
-              </p>
-            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-black">
+              GLITCH <span className="text-[#E43D12]">1.0</span> Event Management
+            </h1>
+            <p className="text-xs text-black font-extrabold mt-1">
+              Verify Registrations, Issue QR/Barcode Passes, Schedule Events & Monitor Live Gate Attendance.
+            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <a
+              href="/scanner"
+              target="_blank"
+              className="px-4 py-2.5 rounded-xl btn-3d-primary font-black text-xs text-white shadow-md flex items-center gap-2"
+            >
+              <QrCode className="w-4 h-4" /> Launch Scanner Portal
+            </a>
+
+            <a
               href="/api/admin/export?type=registrations"
               target="_blank"
-              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 font-extrabold text-xs flex items-center gap-2 hover:bg-slate-50 hover:border-[#E43D12] hover:text-[#E43D12] transition-colors shadow-sm"
+              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-black font-extrabold text-xs flex items-center gap-2 hover:bg-slate-50 shadow-sm"
             >
               <Download className="w-4 h-4 text-[#E43D12]" /> Registrations CSV
             </a>
+
             <a
-              href="/api/admin/export?type=participants"
+              href="/api/admin/export/attendance"
               target="_blank"
-              className="px-4 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 font-extrabold text-xs flex items-center gap-2 hover:bg-amber-100 transition-colors shadow-sm"
+              className="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-900 font-extrabold text-xs flex items-center gap-2 hover:bg-emerald-100 shadow-sm"
             >
-              <Download className="w-4 h-4 text-amber-600" /> Overall Participants CSV
+              <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Attendance CSV
             </a>
           </div>
         </div>
@@ -402,10 +631,14 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Re-Organized Modern Tab Navigation */}
+        {/* Tab Navigation Bar */}
         <div className="bg-white border-2 border-slate-300 p-1.5 rounded-2xl flex items-center gap-1.5 overflow-x-auto shadow-sm">
           {[
             { id: 'registrations', label: 'Registrations Review', icon: Users, badge: pendingCount > 0 ? `${pendingCount} Pending` : null },
+            { id: 'attendance', label: 'Attendance Dashboard', icon: Activity },
+            { id: 'events', label: 'Scan Events & Meals', icon: Calendar, badge: `${events.filter((e) => e.isActive).length} Active` },
+            { id: 'scanners', label: 'Scanner Operators', icon: QrCode },
+            { id: 'audit', label: 'Security Audit Logs', icon: ShieldCheck },
             { id: 'problem-statements', label: 'Problem Statements & Timer', icon: FileText, badge: `${problemStatements.length} PS` },
             { id: 'results', label: 'Results & Awards', icon: Trophy },
             { id: 'coordinators', label: 'Coordinators Manager', icon: GraduationCap },
@@ -417,7 +650,7 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-all whitespace-nowrap ${
+                className={`px-4 py-2.5 rounded-xl font-extrabold text-xs sm:text-sm flex items-center gap-2.5 transition-all whitespace-nowrap cursor-pointer ${
                   isActive
                     ? 'bg-[#E43D12] text-white shadow-md shadow-[#E43D12]/20 scale-[1.02]'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-white/80'
@@ -448,107 +681,101 @@ export default function AdminDashboard() {
                   <Search className="w-4 h-4 text-[#E43D12] absolute left-3 top-3.5" />
                   <input
                     type="text"
-                    placeholder="Search Team Name, ID, or College..."
+                    placeholder="Search by team name, ID, leader..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border-2 border-slate-300 text-xs font-extrabold bg-white text-black placeholder-slate-500 focus:border-[#E43D12]"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-slate-300 text-xs font-black bg-white text-black placeholder-slate-500 focus:border-[#E43D12]"
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-slate-700" />
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <span className="text-xs font-black uppercase text-black flex items-center gap-1">
+                    <Filter className="w-4 h-4 text-[#E43D12]" /> Status Filter:
+                  </span>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-extrabold bg-white text-black"
+                    className="px-3 py-2 rounded-xl border-2 border-slate-300 text-xs font-black bg-white text-black focus:border-[#E43D12]"
                   >
-                    <option value="ALL">All Statuses</option>
-                    <option value="PENDING">Pending Approval</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
+                    <option value="ALL">All Statuses ({teams.length})</option>
+                    <option value="PENDING">Pending Review ({pendingCount})</option>
+                    <option value="APPROVED">Approved ({approvedCount})</option>
+                    <option value="REJECTED">Rejected ({rejectedCount})</option>
                   </select>
                 </div>
               </div>
 
-              {/* Sample Teams List Table */}
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-100 text-slate-700 font-black uppercase tracking-wider border-b border-slate-200">
-                    <tr>
-                      <th className="p-4">Team ID</th>
-                      <th className="p-4">Team Name</th>
-                      <th className="p-4">Size</th>
-                      <th className="p-4">Institution</th>
-                      <th className="p-4">UTR Number</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-right">Actions</th>
+              {/* Registrations Table */}
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-200 font-black uppercase text-black">
+                      <th className="p-3.5">Assigned ID / Team</th>
+                      <th className="p-3.5">Leader Contact</th>
+                      <th className="p-3.5">Members</th>
+                      <th className="p-3.5">Transaction UTR</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Review Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-200 font-medium bg-white">
-                    {[
-                      {
-                        id: 't-1',
-                        teamId: 'GL-01',
-                        teamName: 'Neural Knights',
-                        teamSize: 3,
-                        college: 'IIT Madras',
-                        transactionUtor: '984019283019',
-                        status: 'APPROVED',
-                        paymentScreenshotUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500',
-                        leaderName: 'Karthik Raja',
-                        leaderEmail: 'karthik@iitm.ac.in',
-                        members: [
-                          { name: 'Karthik Raja', isLeader: true, college: 'IIT Madras', department: 'CSE', year: '4th Year' },
-                          { name: 'Siddharth V', isLeader: false, college: 'IIT Madras', department: 'CSE', year: '4th Year' },
-                          { name: 'Priya R', isLeader: false, college: 'IIT Madras', department: 'AI & Data Science', year: '3rd Year' },
-                        ],
-                      },
-                      {
-                        id: 't-2',
-                        teamId: null,
-                        teamName: 'CyberShield',
-                        teamSize: 2,
-                        college: 'VIT Vellore',
-                        transactionUtor: '491029381029',
-                        status: 'PENDING',
-                        paymentScreenshotUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500',
-                        leaderName: 'Ananya Roy',
-                        leaderEmail: 'ananya@vit.ac.in',
-                        members: [
-                          { name: 'Ananya Roy', isLeader: true, college: 'VIT Vellore', department: 'IT', year: '3rd Year' },
-                          { name: 'Rohan Sharma', isLeader: false, college: 'VIT Vellore', department: 'IT', year: '3rd Year' },
-                        ],
-                      },
-                    ].map((team) => (
-                      <tr key={team.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="p-4 font-mono font-bold text-[#E43D12]">{team.teamId || 'Unassigned'}</td>
-                        <td className="p-4 font-bold text-slate-900">{team.teamName}</td>
-                        <td className="p-4 font-semibold text-slate-700">{team.teamSize} Members</td>
-                        <td className="p-4 font-semibold text-slate-700">{team.college}</td>
-                        <td className="p-4 font-mono text-slate-600">{team.transactionUtor}</td>
-                        <td className="p-4">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                              team.status === 'APPROVED'
-                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                                : team.status === 'REJECTED'
-                                ? 'bg-red-100 text-red-800 border border-red-300'
-                                : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}
-                          >
-                            {team.status}
-                          </span>
-                        </td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => setSelectedTeamModal(team)}
-                            className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-800 border border-slate-300 font-bold hover:bg-[#E43D12] hover:text-white hover:border-[#E43D12] transition-colors flex items-center gap-1.5 ml-auto shadow-sm"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-[#E43D12]" /> Review Details
-                          </button>
+                  <tbody className="divide-y divide-slate-200 font-semibold text-black">
+                    {filteredTeams.length > 0 ? (
+                      filteredTeams.map((team) => (
+                        <tr key={team.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5">
+                            <div className="font-black text-black text-sm flex items-center gap-2">
+                              {team.teamId ? (
+                                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 font-black text-xs">
+                                  {team.teamId}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 font-bold text-[10px]">
+                                  PENDING
+                                </span>
+                              )}
+                              <span>{team.teamName}</span>
+                            </div>
+                          </td>
+                          <td className="p-3.5 font-extrabold text-black">
+                            <p>{team.leader?.name || 'N/A'}</p>
+                            <p className="text-slate-600 font-semibold text-[11px]">{team.leader?.email}</p>
+                          </td>
+                          <td className="p-3.5 font-bold text-black">
+                            {team.members?.length || team.teamSize} Members
+                          </td>
+                          <td className="p-3.5 font-mono text-[#E43D12] font-black">
+                            {team.transactionUtor}
+                          </td>
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${
+                                team.status === 'APPROVED'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : team.status === 'REJECTED'
+                                  ? 'bg-red-100 text-red-800 border border-red-300'
+                                  : 'bg-amber-100 text-amber-800 border border-amber-300'
+                              }`}
+                            >
+                              {team.status}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              onClick={() => setSelectedTeamModal(team)}
+                              className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-black font-black text-xs transition shadow-xs cursor-pointer"
+                            >
+                              Review & Verification
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-500 font-bold">
+                          No registered teams found matching filters.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -556,13 +783,297 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 2: PROBLEM STATEMENTS & TIMER WINDOW CONTROL */}
+        {/* TAB 2: ATTENDANCE DASHBOARD (NEW) */}
+        {activeTab === 'attendance' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="p-5 rounded-2xl card-3d bg-white border-slate-200 shadow-sm">
+                <div className="text-xs font-black uppercase text-slate-500">Registered Teams</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{attendanceData?.summary?.totalTeams || 0}</div>
+                <div className="text-[11px] font-bold text-emerald-700 mt-1">{attendanceData?.summary?.approvedTeams || 0} Approved</div>
+              </div>
+              <div className="p-5 rounded-2xl card-3d bg-white border-slate-200 shadow-sm">
+                <div className="text-xs font-black uppercase text-slate-500">Registered Members</div>
+                <div className="text-3xl font-black text-slate-900 mt-1">{attendanceData?.summary?.totalMembers || 0}</div>
+                <div className="text-[11px] font-bold text-slate-600 mt-1">Participants</div>
+              </div>
+              <div className="p-5 rounded-2xl card-3d bg-white border-slate-200 shadow-sm">
+                <div className="text-xs font-black uppercase text-slate-500">Checked-In Members</div>
+                <div className="text-3xl font-black text-emerald-600 mt-1">{attendanceData?.summary?.checkedInMembers || 0}</div>
+                <div className="text-[11px] font-bold text-emerald-700 mt-1">Present at Event</div>
+              </div>
+              <div className="p-5 rounded-2xl card-3d bg-white border-slate-200 shadow-sm">
+                <div className="text-xs font-black uppercase text-slate-500">Absent Members</div>
+                <div className="text-3xl font-black text-amber-600 mt-1">{attendanceData?.summary?.absentMembersCount || 0}</div>
+                <div className="text-[11px] font-bold text-amber-700 mt-1">Pending Gate Scan</div>
+              </div>
+            </div>
+
+            <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                <h3 className="text-lg font-black text-black flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-[#E43D12]" /> Live Gate Attendance Log
+                </h3>
+                <a
+                  href="/api/admin/export/attendance"
+                  target="_blank"
+                  className="px-4 py-2 rounded-xl btn-3d-primary font-black text-xs text-white shadow-sm flex items-center gap-2"
+                >
+                  <FileSpreadsheet className="w-4 h-4 text-white" /> Download Excel/CSV
+                </a>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-200 font-black uppercase text-black">
+                      <th className="p-3">Event</th>
+                      <th className="p-3">Team ID / Name</th>
+                      <th className="p-3">Member Name</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Scanner Operator</th>
+                      <th className="p-3">Timestamp</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 font-semibold text-black">
+                    {attendanceData?.records && attendanceData.records.length > 0 ? (
+                      attendanceData.records.map((rec: any) => (
+                        <tr key={rec.id} className="hover:bg-slate-50">
+                          <td className="p-3 font-extrabold text-[#E43D12]">{rec.event?.name || 'Scan Event'}</td>
+                          <td className="p-3 font-bold">
+                            <span className="text-[#E43D12] font-black">{rec.team?.teamId || 'GL-01'}</span> - {rec.team?.teamName}
+                          </td>
+                          <td className="p-3 font-bold">{rec.member?.name}</td>
+                          <td className="p-3">
+                            <span
+                              className={`px-2 py-0.5 rounded font-black text-[10px] uppercase ${
+                                rec.status === 'PRESENT'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                  : 'bg-red-100 text-red-800 border border-red-300'
+                              }`}
+                            >
+                              {rec.status}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-600 font-medium">{rec.scanner?.name || 'Gate Operator'}</td>
+                          <td className="p-3 font-mono text-slate-600">{new Date(rec.scannedAt).toLocaleString()}</td>
+                          <td className="p-3 text-right">
+                            <button
+                              onClick={() => {
+                                setManualCorrectionModal({
+                                  eventId: rec.eventId,
+                                  teamId: rec.teamId,
+                                  memberId: rec.memberId,
+                                  memberName: rec.member?.name,
+                                  currentStatus: rec.status,
+                                });
+                                setManualStatusInput(rec.status === 'PRESENT' ? 'ABSENT' : 'PRESENT');
+                              }}
+                              className="px-3 py-1 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-black font-extrabold text-xs cursor-pointer"
+                            >
+                              Manual Override
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="p-8 text-center text-slate-500 font-bold">
+                          No attendance records captured yet. Use the Attendance Scanner Portal to record team check-ins.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: SCAN EVENTS & MEALS (NEW) */}
+        {activeTab === 'events' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b pb-4 border-slate-200">
+              <h2 className="text-xl font-black text-black">Scan Events & Meal Schedule Configuration</h2>
+              <button
+                onClick={() => setNewEventModal(true)}
+                className="px-4 py-2.5 rounded-xl btn-3d-primary font-black text-xs text-white shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Create New Scan Event
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((evt) => (
+                <div key={evt.id} className="card-3d p-6 rounded-3xl bg-white border-2 border-slate-300 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2.5 py-1 rounded bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-[10px] font-black uppercase">
+                      {evt.type}
+                    </span>
+                    <button
+                      onClick={() => handleToggleEventActive(evt.id, evt.isActive)}
+                      className={`px-3 py-1 rounded-full text-xs font-black cursor-pointer ${
+                        evt.isActive ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {evt.isActive ? 'ACTIVE' : 'INACTIVE'}
+                    </button>
+                  </div>
+
+                  <h3 className="text-base font-black text-black">{evt.name}</h3>
+                  <p className="text-xs text-slate-600 font-semibold">{evt.description || 'Event description'}</p>
+
+                  <div className="pt-3 border-t border-slate-200 text-xs font-mono font-bold text-slate-700 space-y-1">
+                    <p>Start: {new Date(evt.startDate).toLocaleString()}</p>
+                    <p>End: {new Date(evt.endDate).toLocaleString()}</p>
+                    <p className="text-[#E43D12] mt-1 font-black">
+                      Duplicates: {evt.allowDuplicate ? 'ALLOWED' : 'BLOCKED'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: SCANNER OPERATORS (NEW) */}
+        {activeTab === 'scanners' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b pb-4 border-slate-200">
+              <h2 className="text-xl font-black text-black">Attendance Scanner Operators</h2>
+              <button
+                onClick={() => setNewScannerModal(true)}
+                className="px-4 py-2.5 rounded-xl btn-3d-primary font-black text-xs text-white shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> Create Scanner Operator Account
+              </button>
+            </div>
+
+            <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200 font-black uppercase text-black">
+                    <th className="p-3.5">Operator Name</th>
+                    <th className="p-3.5">Email Login</th>
+                    <th className="p-3.5">Phone</th>
+                    <th className="p-3.5">Account Status</th>
+                    <th className="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 font-semibold text-black">
+                  {scanners.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-50">
+                      <td className="p-3.5 font-black text-black text-sm">{s.name}</td>
+                      <td className="p-3.5 font-mono text-[#E43D12] font-extrabold">{s.email}</td>
+                      <td className="p-3.5 font-mono text-slate-600">{s.phone || 'N/A'}</td>
+                      <td className="p-3.5">
+                        <span
+                          className={`px-2.5 py-1 rounded-full font-black text-[10px] uppercase ${
+                            s.isActive ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300'
+                          }`}
+                        >
+                          {s.isActive ? 'ENABLED' : 'DISABLED'}
+                        </span>
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <button
+                          onClick={() => handleToggleScannerActive(s.id, s.isActive)}
+                          className="px-3.5 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-black font-extrabold text-xs cursor-pointer shadow-xs"
+                        >
+                          {s.isActive ? 'Disable Account' : 'Enable Account'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: SECURITY AUDIT LOGS (NEW) */}
+        {activeTab === 'audit' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-black text-black border-b pb-4 border-slate-200">Security Audit Trail Log</h2>
+
+            <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200 font-black uppercase text-black">
+                    <th className="p-3.5">Timestamp</th>
+                    <th className="p-3.5">User</th>
+                    <th className="p-3.5">Action</th>
+                    <th className="p-3.5">Details</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 font-mono text-black">
+                  {auditLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50">
+                      <td className="p-3.5 text-slate-600">{new Date(log.createdAt).toLocaleString()}</td>
+                      <td className="p-3.5 text-[#E43D12] font-black">{log.userEmail || log.userId || 'System'}</td>
+                      <td className="p-3.5 font-black text-emerald-800">{log.action}</td>
+                      <td className="p-3.5 text-slate-800 font-semibold">{log.details}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: PROBLEM STATEMENTS & SELECTION TIMER */}
         {activeTab === 'problem-statements' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              {/* Active PS List */}
+              {/* Active Selection Window Timer Controller */}
+              <div className="card-3d p-6 rounded-3xl bg-white border-2 border-[#E43D12]/30 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4 border-slate-200">
+                  <div>
+                    <span className="text-xs font-black uppercase text-[#E43D12] tracking-wider block">
+                      Live PS Selection Lock Status
+                    </span>
+                    <h3 className="text-xl font-black text-black">
+                      {selectionWindow?.isOpen ? '🟢 SELECTION WINDOW ACTIVE' : '🔴 SELECTION WINDOW LOCKED'}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {selectionWindow?.isOpen ? (
+                      <button
+                        onClick={() => handleToggleTimerWindow(false)}
+                        className="px-5 py-2.5 rounded-xl bg-red-600 text-white font-black text-xs shadow-md hover:bg-red-700 flex items-center gap-2 cursor-pointer"
+                      >
+                        <Lock className="w-4 h-4" /> Immediately Lock Window
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleToggleTimerWindow(true)}
+                        className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-black text-xs shadow-md hover:bg-emerald-700 flex items-center gap-2 cursor-pointer"
+                      >
+                        <Unlock className="w-4 h-4" /> Open Window ({timerMinutes} Mins)
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-xs font-black text-black">
+                  <span>Window Timer Duration:</span>
+                  <input
+                    type="number"
+                    min={5}
+                    max={180}
+                    value={timerMinutes}
+                    onChange={(e) => setTimerMinutes(parseInt(e.target.value) || 30)}
+                    className="w-20 px-3 py-1.5 rounded-xl border-2 border-slate-300 text-black text-xs font-black text-center"
+                  />
+                  <span className="text-slate-500">Minutes</span>
+                </div>
+              </div>
+
+              {/* Problem Statements List */}
               <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
-                <h3 className="font-black text-slate-900 text-lg border-b pb-3 border-slate-200">
+                <h3 className="font-black text-black text-lg border-b pb-3 border-slate-200">
                   Published Problem Statements ({problemStatements.length})
                 </h3>
 
@@ -570,36 +1081,29 @@ export default function AdminDashboard() {
                   {problemStatements.map((ps) => (
                     <div key={ps.id} className="p-5 rounded-2xl bg-white border-2 border-slate-300 space-y-2 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-xs bg-white text-[#E43D12] border border-slate-300 px-2.5 py-0.5 rounded shadow-xs">
+                        <span className="px-2.5 py-1 rounded bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 font-black text-xs">
                           {ps.psNumber}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-slate-500">{ps.category}</span>
                           <button
-                            onClick={() => setEditingPsModal({ ...ps })}
-                            className="p-1.5 text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold px-2.5 shadow-xs"
-                            title="Edit Problem Statement"
+                            onClick={() => setEditingPsModal(ps)}
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
                           >
-                            <Edit3 className="w-3.5 h-3.5 text-[#E43D12]" /> Edit
+                            <Edit3 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDeletePs(ps.id)}
-                            className="p-1.5 text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors flex items-center gap-1 text-xs font-bold px-2.5 shadow-xs"
-                            title="Delete Problem Statement"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-red-600" /> Delete
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                      <h4 className="font-black text-slate-900 text-base">{ps.title}</h4>
-                      <p className="text-xs text-slate-600 leading-relaxed font-medium">{ps.description}</p>
-                      <a
-                        href={ps.driveLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#E43D12] font-bold hover:underline inline-flex items-center gap-1 pt-1"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" /> Open Drive Resource Link
+
+                      <h4 className="font-black text-black text-base">{ps.title}</h4>
+                      <p className="text-xs text-black font-extrabold">{ps.description}</p>
+                      <a href={ps.driveLink} target="_blank" className="text-xs font-black text-[#E43D12] hover:underline flex items-center gap-1">
+                        <ExternalLink className="w-3.5 h-3.5" /> View Drive Resource Folder
                       </a>
                     </div>
                   ))}
@@ -607,469 +1111,144 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Selection Window Timer Control Column */}
-            <div className="space-y-6">
-              <div className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
-                <h3 className="font-black text-slate-900 text-base flex items-center gap-2 border-b pb-2 border-slate-200">
-                  <Clock className="w-5 h-5 text-[#E43D12]" /> PS Selection Window Control
-                </h3>
+            {/* Create Problem Statement Form */}
+            <form onSubmit={handleCreatePs} className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
+              <h3 className="font-black text-black text-base border-b pb-2 border-slate-200">
+                Add Problem Statement
+              </h3>
 
-                <div className="space-y-3">
-                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                    Selection Window Duration
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[15, 30, 60].map((mins) => (
-                      <button
-                        key={mins}
-                        onClick={() => setTimerMinutes(mins)}
-                        className={`py-2 rounded-xl font-bold text-xs border ${
-                          timerMinutes === mins
-                            ? 'gradient-bg-flame text-white border-[#E43D12] shadow-md'
-                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                        }`}
-                      >
-                        {mins} Mins
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="pt-2">
-                    {selectionWindow?.isOpen ? (
-                      <button
-                        onClick={() => handleToggleWindow(false)}
-                        className="w-full py-3 rounded-xl bg-red-600 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 hover:bg-red-700"
-                      >
-                        <Lock className="w-4 h-4" /> Close Selection Window Now
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleToggleWindow(true)}
-                        className="w-full py-3 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 hover:bg-emerald-700"
-                      >
-                        <Unlock className="w-4 h-4" /> Open Selection Window ({timerMinutes} Mins)
-                      </button>
-                    )}
-                  </div>
-                </div>
+              <div>
+                <label className="block text-xs font-black text-black mb-1">PS Number (e.g. PS-04)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="PS-04"
+                  value={newPs.psNumber}
+                  onChange={(e) => setNewPs({ ...newPs, psNumber: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                />
               </div>
 
-              {/* Add New PS Form */}
-              <form onSubmit={handleAddPs} className="card-3d p-6 rounded-3xl bg-white border-slate-200 space-y-4 shadow-sm">
-                <h3 className="font-black text-slate-900 text-base border-b pb-2 border-slate-200">
-                  Upload New Problem Statement
-                </h3>
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Category</label>
+                <input
+                  type="text"
+                  placeholder="Software & AI"
+                  value={newPs.category}
+                  onChange={(e) => setNewPs({ ...newPs, category: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">PS Number (e.g. PS-04)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="PS-04"
-                    value={newPs.psNumber}
-                    onChange={(e) => setNewPs({ ...newPs, psNumber: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Title of problem..."
+                  value={newPs.title}
+                  onChange={(e) => setNewPs({ ...newPs, title: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Problem Statement Title"
-                    value={newPs.title}
-                    onChange={(e) => setNewPs({ ...newPs, title: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Description</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Detailed description..."
+                  value={newPs.description}
+                  onChange={(e) => setNewPs({ ...newPs, description: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">Description</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Detailed problem description..."
-                    value={newPs.description}
-                    onChange={(e) => setNewPs({ ...newPs, description: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                  />
-                </div>
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Google Drive Link</label>
+                <input
+                  type="url"
+                  required
+                  placeholder="https://drive.google.com/..."
+                  value={newPs.driveLink}
+                  onChange={(e) => setNewPs({ ...newPs, driveLink: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                />
+              </div>
 
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">Google Drive Resource Link</label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://drive.google.com/..."
-                    value={newPs.driveLink}
-                    onChange={(e) => setNewPs({ ...newPs, driveLink: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                  />
-                </div>
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md cursor-pointer"
+              >
+                Publish Problem Statement
+              </button>
+            </form>
+          </div>
+        )}
 
-                <button
-                  type="submit"
-                  className="w-full py-2.5 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
+        {/* TAB 7: RESULT PUBLISHING & PRIZES */}
+        {activeTab === 'results' && (
+          <div className="card-3d p-6 sm:p-10 rounded-3xl bg-white border-slate-200 space-y-6 shadow-sm">
+            <h3 className="text-xl font-black text-black border-b pb-3 border-slate-200 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-[#EFB11D]" /> Result Management & Announcements
+            </h3>
+
+            <p className="text-xs text-black font-extrabold">
+              Assign result prize tiers (First Prize, Second Prize, Third Prize, Participated) to approved hackathon teams.
+            </p>
+
+            <div className="p-6 rounded-2xl bg-white border-2 border-slate-300 space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <span className="text-xs font-black uppercase text-black">Assign Prize Tier:</span>
+                <select
+                  value={assignResultTier}
+                  onChange={(e) => setAssignResultTier(e.target.value)}
+                  className="px-4 py-2 rounded-xl border-2 border-slate-300 text-xs font-black bg-white text-black"
                 >
-                  Publish Problem Statement
+                  <option value="FIRST_PRIZE">🏆 1st Prize (Grand Champion)</option>
+                  <option value="SECOND_PRIZE">🥇 2nd Prize (Runner Up)</option>
+                  <option value="THIRD_PRIZE">🥈 3rd Prize (Second Runner Up)</option>
+                  <option value="PARTICIPATED">📜 Participated Certificate</option>
+                </select>
+                <button
+                  onClick={async () => {
+                    if (selectedTeamResultIds.length === 0) return alert('Select at least one team');
+                    await fetch('/api/admin/results', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ teamDbIds: selectedTeamResultIds, result: assignResultTier }),
+                    });
+                    setMessage('Results updated successfully!');
+                    fetchAdminData();
+                  }}
+                  className="px-5 py-2 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md cursor-pointer"
+                >
+                  Publish Result to Selected Teams
                 </button>
-              </form>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                {teams.filter((t) => t.status === 'APPROVED').map((t) => (
+                  <label key={t.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 text-xs font-black text-black cursor-pointer hover:bg-slate-50">
+                    <input
+                      type="checkbox"
+                      checked={selectedTeamResultIds.includes(t.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedTeamResultIds([...selectedTeamResultIds, t.id]);
+                        else setSelectedTeamResultIds(selectedTeamResultIds.filter((i) => i !== t.id));
+                      }}
+                    />
+                    <span>
+                      <strong className="text-[#E43D12]">{t.teamId}</strong> - {t.teamName} (Result: {t.result || 'NONE'})
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        {/* TAB 3: LANDING PAGE CMS EDITOR WITH SUB-TABS */}
-        {activeTab === 'cms' && (
-          <form onSubmit={handleSaveCms} className="card-3d p-6 sm:p-10 rounded-3xl bg-white border-slate-200 space-y-6 shadow-sm">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4 border-slate-200">
-              <div>
-                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <Edit3 className="w-5 h-5 text-[#E43D12]" /> Dynamic Landing Page CMS Settings
-                </h3>
-                <p className="text-xs text-slate-600 font-medium mt-0.5">
-                  Manage hero titles, payment QR code & bank accounts, eligibility rules, and event agenda in dedicated sub-tabs.
-                </p>
-              </div>
-
-              {/* CMS Sub-Tabs Control Pills */}
-              <div className="bg-white p-1.5 rounded-2xl border-2 border-slate-300 flex items-center gap-1 overflow-x-auto shadow-sm">
-                {[
-                  { id: 'hero', label: 'Hero & Overview', icon: Sparkles },
-                  { id: 'payment', label: 'Payment & Bank', icon: CreditCard },
-                  { id: 'rules', label: 'Rules & Guidelines', icon: ShieldAlert },
-                  { id: 'agenda', label: 'Agenda & Timeline', icon: Calendar },
-                ].map((subTab) => {
-                  const SubIcon = subTab.icon;
-                  const isSubActive = cmsSubTab === subTab.id;
-                  return (
-                    <button
-                      key={subTab.id}
-                      type="button"
-                      onClick={() => setCmsSubTab(subTab.id as any)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all whitespace-nowrap ${
-                        isSubActive
-                          ? 'bg-[#E43D12] text-white shadow-md shadow-[#E43D12]/20'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-white'
-                      }`}
-                    >
-                      <SubIcon className={`w-3.5 h-3.5 ${isSubActive ? 'text-white' : 'text-[#E43D12]'}`} />
-                      <span>{subTab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* SUB-TAB 1: HERO & OVERVIEW */}
-            {cmsSubTab === 'hero' && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                <h4 className="font-extrabold text-[#E43D12] text-sm uppercase tracking-wider flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#E43D12]" /> Hero Banner & Basic Event Info
-                </h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2 p-4 rounded-2xl bg-white border-2 border-slate-300 space-y-2">
-                    <label className="block text-xs font-black uppercase text-[#E43D12]">
-                      Website & Navbar Logo Image URL (Shown in Header & Hero Badge)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. https://... or /images/logo.png"
-                      value={cmsContent.logoUrl || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, logoUrl: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                    {cmsContent.logoUrl && (
-                      <div className="flex items-center gap-3 mt-2 pt-2 border-t border-slate-200">
-                        <span className="text-[11px] font-bold text-slate-700">Preview:</span>
-                        <img src={cmsContent.logoUrl} alt="Logo Preview" className="w-8 h-8 object-contain rounded-full bg-white p-0.5 border border-slate-300 shadow-xs" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black uppercase text-black mb-1">Hero Main Headline</label>
-                    <input
-                      type="text"
-                      value={cmsContent.heroHeadline || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, heroHeadline: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black uppercase text-black mb-1">Event Date Text</label>
-                    <input
-                      type="text"
-                      value={cmsContent.eventDate || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, eventDate: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black uppercase text-black mb-1">Event Time / Duration</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 08:30 AM IST (24 Hours Live Code)"
-                      value={cmsContent.eventTime || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, eventTime: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black uppercase text-black mb-1">Venue Name & Location</label>
-                    <input
-                      type="text"
-                      value={cmsContent.venue || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, venue: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-black uppercase text-black mb-1">Hero Subtitle</label>
-                    <textarea
-                      rows={3}
-                      value={cmsContent.heroSubtitle || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, heroSubtitle: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* SUB-TAB 2: PAYMENT & BANK DETAILS */}
-            {cmsSubTab === 'payment' && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                <h4 className="font-extrabold text-[#D6536D] text-sm uppercase tracking-wider flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#D6536D]" /> Registration Fee, Bank Accounts & Payment QR Code
-                </h4>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">
-                      Registration Fee Display (Per Team / Per Head)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. ₹300 / Team or ₹100 / Head"
-                      value={cmsContent.regFee || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, regFee: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">UPI ID</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. glitch10@upi"
-                      value={cmsContent.upiId || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, upiId: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">Bank Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. State Bank of India"
-                      value={cmsContent.bankName || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, bankName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">Account Holder Name</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. GLITCH HACKATHON COMMITTEE"
-                      value={cmsContent.bankAccountName || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, bankAccountName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">Account Number</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 98765432109876"
-                      value={cmsContent.bankAccountNumber || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, bankAccountNumber: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">IFSC Code</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. SBIN0001234"
-                      value={cmsContent.bankIfsc || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, bankIfsc: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold font-mono placeholder-slate-500 focus:border-[#E43D12]"
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-black text-black mb-1">
-                      Payment QR Code Image (Upload Image File or Paste URL)
-                    </label>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                      <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-black cursor-pointer flex items-center justify-center gap-2 border-2 border-slate-300 shrink-0 transition-colors shadow-xs">
-                        <Upload className="w-4 h-4 text-[#E43D12]" />
-                        {uploadingQr ? 'Uploading QR Image...' : 'Upload QR Image File'}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={uploadingQr}
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              setUploadingQr(true);
-                              try {
-                                const url = await uploadQrCodeImage(file);
-                                setCmsContent({ ...cmsContent, qrCodeUrl: url });
-                                setMessage('QR Code image uploaded successfully!');
-                              } catch (err: any) {
-                                setError('QR upload failed: ' + err.message);
-                              } finally {
-                                setUploadingQr(false);
-                              }
-                            }
-                          }}
-                          className="hidden"
-                        />
-                      </label>
-
-                      <input
-                        type="text"
-                        placeholder="Or paste QR Code Image URL directly..."
-                        value={cmsContent.qrCodeUrl || ''}
-                        onChange={(e) => setCmsContent({ ...cmsContent, qrCodeUrl: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
-                      />
-                    </div>
-
-                    {cmsContent.qrCodeUrl && (
-                      <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <img
-                            src={cmsContent.qrCodeUrl}
-                            alt="QR Preview"
-                            className="w-16 h-16 object-contain rounded-lg border border-slate-200 bg-white p-1 shadow-xs"
-                          />
-                          <div>
-                            <span className="text-xs font-extrabold text-emerald-700 block">✓ Custom QR Code Loaded</span>
-                            <span className="text-[11px] text-slate-600 font-mono block truncate max-w-md">
-                              {cmsContent.qrCodeUrl}
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setCmsContent({ ...cmsContent, qrCodeUrl: '' })}
-                          className="px-3 py-1 rounded-lg bg-red-100 text-red-700 border border-red-300 text-xs font-bold hover:bg-red-200"
-                        >
-                          Remove QR
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* SUB-TAB 3: RULES & GUIDELINES */}
-            {cmsSubTab === 'rules' && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                <h4 className="font-extrabold text-[#E43D12] text-sm uppercase tracking-wider flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-[#E43D12]" /> Hackathon Rules & Registration Guidelines
-                </h4>
-
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">
-                    Team & Eligibility Rules (Enter one rule per line)
-                  </label>
-                  <textarea
-                    rows={5}
-                    value={cmsContent.rulesEligibility || ''}
-                    onChange={(e) => setCmsContent({ ...cmsContent, rulesEligibility: e.target.value })}
-                    placeholder="Team Size: Strictly 1 to 3 members per team...&#10;Institutional Uniformity: All team members..."
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">
-                    Hackathon Conduct & Submission Rules (Enter one rule per line)
-                  </label>
-                  <textarea
-                    rows={5}
-                    value={cmsContent.rulesConduct || ''}
-                    onChange={(e) => setCmsContent({ ...cmsContent, rulesConduct: e.target.value })}
-                    placeholder="Problem Statement Lock: Selection window...&#10;Originality: Fresh work only..."
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* SUB-TAB 4: AGENDA & TIMELINE */}
-            {cmsSubTab === 'agenda' && (
-              <div className="space-y-6 animate-in fade-in-50 duration-150">
-                <h4 className="font-extrabold text-[#D6536D] text-sm uppercase tracking-wider flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-[#D6536D]" /> Event Agenda & Timeline Schedule
-                </h4>
-
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">
-                    Day 1 Agenda Items (Format per line: Time | Event Title | Description)
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={cmsContent.agendaDay1 || ''}
-                    onChange={(e) => setCmsContent({ ...cmsContent, agendaDay1: e.target.value })}
-                    placeholder="08:30 AM | Reporting & Badge Verification | Check-in at venue&#10;09:30 AM | Inauguration | Welcome address..."
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-black mb-1">
-                    Day 2 Agenda Items (Format per line: Time | Event Title | Description)
-                  </label>
-                  <textarea
-                    rows={6}
-                    value={cmsContent.agendaDay2 || ''}
-                    onChange={(e) => setCmsContent({ ...cmsContent, agendaDay2: e.target.value })}
-                    placeholder="09:00 AM | Final Sprint | Code freeze warning&#10;11:30 AM | Jury Presentation | Pitch to judges..."
-                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="border-t pt-4 border-slate-200">
-              <button
-                type="submit"
-                disabled={savingCms}
-                className="px-6 py-3 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md flex items-center gap-2"
-              >
-                <Save className="w-4 h-4 text-white" /> Save All CMS Changes
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* TAB 4: COORDINATORS MANAGER */}
+        {/* TAB 8: COORDINATORS MANAGER */}
         {activeTab === 'coordinators' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
@@ -1091,7 +1270,7 @@ export default function AdminDashboard() {
                       </div>
                       <button
                         onClick={() => handleDeleteCoordinator(c.id)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1111,7 +1290,7 @@ export default function AdminDashboard() {
                 <label className="block text-xs font-black text-black mb-1">Coordinator Type</label>
                 <select
                   value={newCoord.type}
-                  onChange={(e) => setNewCoord({ ...newCoord, type: e.target.value })}
+                  onChange={(e) => setNewCoord({ ...newCoord, type: e.target.value as any })}
                   className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                 >
                   <option value="FACULTY">Faculty Coordinator</option>
@@ -1184,7 +1363,7 @@ export default function AdminDashboard() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
+                className="w-full py-2.5 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md cursor-pointer"
               >
                 Add Coordinator
               </button>
@@ -1192,65 +1371,255 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* TAB 5: RESULT PUBLISHING */}
-        {activeTab === 'results' && (
-          <div className="card-3d p-6 sm:p-10 rounded-3xl bg-white border-slate-200 space-y-6 shadow-sm">
-            <h3 className="text-xl font-black text-black border-b pb-3 border-slate-200 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-[#EFB11D]" /> Result Management & Announcements
-            </h3>
-
-            <p className="text-xs text-black font-extrabold">
-              Assign result prize tiers (First Prize, Second Prize, Third Prize, Participated) to approved hackathon teams. Results will appear automatically in team leader dashboards.
-            </p>
-
-            <div className="p-6 rounded-2xl bg-white border-2 border-slate-300 space-y-4">
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-black uppercase text-black">Assign Prize Tier:</span>
-                <select
-                  value={assignResultTier}
-                  onChange={(e) => setAssignResultTier(e.target.value)}
-                  className="px-4 py-2 rounded-xl border-2 border-slate-300 text-xs font-black bg-white text-black"
-                >
-                  <option value="FIRST_PRIZE">🏆 1st Prize (Grand Champion)</option>
-                  <option value="SECOND_PRIZE">🥇 2nd Prize (Runner Up)</option>
-                  <option value="THIRD_PRIZE">🥈 3rd Prize (Second Runner Up)</option>
-                  <option value="PARTICIPATED">📜 Participated Certificate</option>
-                </select>
-                <button
-                  onClick={async () => {
-                    if (selectedTeamResultIds.length === 0) return alert('Select at least one team');
-                    await fetch('/api/admin/results', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ teamDbIds: selectedTeamResultIds, result: assignResultTier }),
-                    });
-                    setMessage('Results updated!');
-                  }}
-                  className="px-5 py-2 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
-                >
-                  Publish Result to Selected Teams
-                </button>
+        {/* TAB 9: LANDING PAGE CMS */}
+        {activeTab === 'cms' && (
+          <form onSubmit={handleSaveCms} className="card-3d p-6 sm:p-10 rounded-3xl bg-white border-slate-200 space-y-6 shadow-sm text-black">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b pb-4 border-slate-200 gap-4">
+              <div>
+                <h3 className="text-xl font-black text-black">Landing Page CMS Content Editor</h3>
+                <p className="text-xs text-black font-extrabold">Update website headlines, Bank UPI payment info, eligibility rules, and event agenda schedules.</p>
               </div>
 
-              <div className="space-y-2">
-                {['t-1', 't-2'].map((id) => (
-                  <label key={id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 text-xs font-black text-black cursor-pointer hover:bg-slate-50">
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedTeamResultIds([...selectedTeamResultIds, id]);
-                        else setSelectedTeamResultIds(selectedTeamResultIds.filter((i) => i !== id));
-                      }}
-                    />
-                    <span>Team {id === 't-1' ? 'GL-01 (Neural Knights)' : 'CyberShield'}</span>
-                  </label>
+              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                {[
+                  { id: 'hero', label: 'Hero Banner' },
+                  { id: 'payment', label: 'Bank & Payment' },
+                  { id: 'rules', label: 'Rules & Guidelines' },
+                  { id: 'agenda', label: 'Agenda & Timeline' },
+                ].map((sub) => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setCmsSubTab(sub.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      cmsSubTab === sub.id ? 'bg-[#E43D12] text-white shadow-xs' : 'text-slate-700 hover:text-black'
+                    }`}
+                  >
+                    {sub.label}
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
+
+            {/* SUB-TAB 1: HERO & EVENT DETAILS */}
+            {cmsSubTab === 'hero' && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Hero Main Headline</label>
+                  <input
+                    type="text"
+                    value={cmsContent.heroHeadline || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, heroHeadline: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Hero Subtitle</label>
+                  <textarea
+                    rows={2}
+                    value={cmsContent.heroSubtitle || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, heroSubtitle: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Event Dates</label>
+                    <input
+                      type="text"
+                      value={cmsContent.eventDate || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, eventDate: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Event Time</label>
+                    <input
+                      type="text"
+                      value={cmsContent.eventTime || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, eventTime: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Venue Location</label>
+                  <input
+                    type="text"
+                    value={cmsContent.venue || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, venue: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 2: BANK & PAYMENT INFO */}
+            {cmsSubTab === 'payment' && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Bank Name</label>
+                    <input
+                      type="text"
+                      value={cmsContent.bankName || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, bankName: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Account Holder Name</label>
+                    <input
+                      type="text"
+                      value={cmsContent.bankAccountName || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, bankAccountName: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Account Number</label>
+                    <input
+                      type="text"
+                      value={cmsContent.bankAccountNumber || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, bankAccountNumber: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">IFSC Code</label>
+                    <input
+                      type="text"
+                      value={cmsContent.bankIfsc || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, bankIfsc: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">UPI ID</label>
+                    <input
+                      type="text"
+                      value={cmsContent.upiId || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, upiId: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Payment QR Code Image</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="text"
+                      placeholder="https://... or upload image"
+                      value={cmsContent.qrCodeUrl || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, qrCodeUrl: e.target.value })}
+                      className="flex-1 px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                    />
+                    <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-black font-black text-xs cursor-pointer border-2 border-slate-300 flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-[#E43D12]" />
+                      <span>{uploadingQr ? 'Uploading...' : 'Upload File'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setUploadingQr(true);
+                          try {
+                            const publicUrl = await uploadQrCodeImage(file);
+                            if (publicUrl) setCmsContent({ ...cmsContent, qrCodeUrl: publicUrl });
+                          } catch (err: any) {
+                            alert(err.message);
+                          } finally {
+                            setUploadingQr(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 3: RULES & GUIDELINES */}
+            {cmsSubTab === 'rules' && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Team Eligibility Rules (Enter one rule per line)
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={cmsContent.rulesEligibility || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, rulesEligibility: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Hackathon Conduct & Submission Rules (Enter one rule per line)
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={cmsContent.rulesConduct || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, rulesConduct: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 4: AGENDA & TIMELINE */}
+            {cmsSubTab === 'agenda' && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Day 1 Agenda Items (Format per line: Time | Event Title | Description)
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={cmsContent.agendaDay1 || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, agendaDay1: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">
+                    Day 2 Agenda Items (Format per line: Time | Event Title | Description)
+                  </label>
+                  <textarea
+                    rows={6}
+                    value={cmsContent.agendaDay2 || ''}
+                    onChange={(e) => setCmsContent({ ...cmsContent, agendaDay2: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-mono font-extrabold focus:border-[#E43D12]"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="border-t pt-4 border-slate-200">
+              <button
+                type="submit"
+                disabled={savingCms}
+                className="px-6 py-3 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <Save className="w-4 h-4 text-white" /> Save All CMS Changes
+              </button>
+            </div>
+          </form>
         )}
 
-        {/* REVIEW REGISTRATION MODAL */}
+        {/* REVIEW REGISTRATION MODAL WITH PAYMENT PROOF SCREENSHOT & QR PASS CARD */}
         {selectedTeamModal && (
           <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-white border-2 border-slate-300 max-w-2xl w-full rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl text-black">
@@ -1267,6 +1636,35 @@ export default function AdminDashboard() {
               </div>
 
               <div className="space-y-4 text-xs">
+                {/* Official QR & Barcode Card for Approved Teams */}
+                {selectedTeamModal.status === 'APPROVED' && selectedTeamModal.qrCodeUrl && (
+                  <div className="p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center space-y-3">
+                    <span className="text-xs font-black uppercase text-emerald-900 tracking-wider block">
+                      Official Generated Team Pass (QR & Barcode)
+                    </span>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 bg-white p-4 rounded-xl border border-emerald-200">
+                      <img src={selectedTeamModal.qrCodeUrl} alt="QR Pass" className="w-32 h-32 rounded-lg border border-slate-200 p-1" />
+                      {selectedTeamModal.barcodeUrl && (
+                        <img src={selectedTeamModal.barcodeUrl} alt="Barcode Pass" className="w-56 h-auto" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-center gap-3 pt-1">
+                      <button
+                        onClick={() => handleRegenerateQr(selectedTeamModal.id)}
+                        className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-black font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-[#E43D12]" /> Regenerate Pass
+                      </button>
+                      <button
+                        onClick={() => handleResendEmail(selectedTeamModal.id)}
+                        className="px-3 py-1.5 rounded-lg btn-3d-primary text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-white" /> Resend QR Email Pass
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <h4 className="font-black uppercase text-black mb-2">Team Members</h4>
                   <div className="space-y-2">
@@ -1305,31 +1703,265 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Rejection Reason Textarea */}
+                {selectedTeamModal.status === 'PENDING' && (
+                  <div>
+                    <label className="block font-black text-black mb-1">Rejection Reason (Required if rejecting):</label>
+                    <textarea
+                      rows={2}
+                      placeholder="e.g. Invalid payment screenshot or UTR mismatch"
+                      value={rejectionReasonInput}
+                      onChange={(e) => setRejectionReasonInput(e.target.value)}
+                      className="w-full p-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {selectedTeamModal.status === 'PENDING' && (
+                <div className="flex items-center justify-between border-t pt-4 border-slate-200">
+                  <button
+                    onClick={() => handleRejectTeam(selectedTeamModal.id)}
+                    className="px-5 py-2.5 rounded-xl bg-red-600 text-white font-extrabold text-xs shadow-md hover:bg-red-700 cursor-pointer"
+                  >
+                    Reject Registration
+                  </button>
+                  <button
+                    onClick={() => handleApproveTeam(selectedTeamModal.id)}
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-md hover:bg-emerald-700 cursor-pointer"
+                  >
+                    Approve & Issue Team QR Pass
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* CREATE SCANNER OPERATOR MODAL */}
+        {newScannerModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <form onSubmit={handleCreateScanner} className="bg-white border-2 border-slate-300 max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl text-black">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                <h3 className="text-lg font-black text-black flex items-center gap-2">
+                  <QrCode className="w-5 h-5 text-[#E43D12]" /> Create Scanner Account
+                </h3>
+                <button type="button" onClick={() => setNewScannerModal(false)} className="p-2 text-slate-400 hover:text-black">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Operator Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Main Gate Operator"
+                  value={newScannerForm.name}
+                  onChange={(e) => setNewScannerForm({ ...newScannerForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Email Login</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="scanner1@glitch.com"
+                  value={newScannerForm.email}
+                  onChange={(e) => setNewScannerForm({ ...newScannerForm, email: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••••••"
+                  value={newScannerForm.password}
+                  onChange={(e) => setNewScannerForm({ ...newScannerForm, password: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t pt-4 border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setNewScannerModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-black font-extrabold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
+                >
+                  Create Scanner Account
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* CREATE SCAN EVENT MODAL */}
+        {newEventModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <form onSubmit={handleCreateEvent} className="bg-white border-2 border-slate-300 max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl text-black">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                <h3 className="text-lg font-black text-black flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-[#E43D12]" /> Create Scan / Meal Event
+                </h3>
+                <button type="button" onClick={() => setNewEventModal(false)} className="p-2 text-slate-400 hover:text-black">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Event Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Day 1 Lunch Sprint"
+                  value={newEventForm.name}
+                  onChange={(e) => setNewEventForm({ ...newEventForm, name: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-black mb-1">Event Type</label>
+                <select
+                  value={newEventForm.type}
+                  onChange={(e) => setNewEventForm({ ...newEventForm, type: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
+                >
+                  <option value="CHECK_IN">CHECK_IN</option>
+                  <option value="BREAKFAST">BREAKFAST</option>
+                  <option value="LUNCH">LUNCH</option>
+                  <option value="REFRESHMENT">REFRESHMENT</option>
+                  <option value="CHECK_OUT">CHECK_OUT</option>
+                  <option value="BREAK">BREAK</option>
+                  <option value="CUSTOM">CUSTOM</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-black text-black mb-1">Rejection Reason (Required if rejecting):</label>
-                  <textarea
-                    rows={2}
-                    placeholder="e.g. Invalid payment screenshot or UTR mismatch"
-                    value={rejectionReasonInput}
-                    onChange={(e) => setRejectionReasonInput(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold placeholder-slate-500 focus:border-[#E43D12]"
+                  <label className="block text-xs font-black text-black mb-1">Start Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={newEventForm.startDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, startDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">End Time</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={newEventForm.endDate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, endDate: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t pt-4 border-slate-200">
+              <div className="flex items-center gap-4 text-xs font-black text-black pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newEventForm.isActive}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, isActive: e.target.checked })}
+                  />
+                  <span>Active Now</span>
+                </label>
+
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={newEventForm.allowDuplicate}
+                    onChange={(e) => setNewEventForm({ ...newEventForm, allowDuplicate: e.target.checked })}
+                  />
+                  <span>Allow Duplicates</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t pt-4 border-slate-200">
                 <button
-                  onClick={() => handleRejectTeam(selectedTeamModal.id)}
-                  className="px-5 py-2.5 rounded-xl bg-red-600 text-white font-extrabold text-xs shadow-md hover:bg-red-700"
+                  type="button"
+                  onClick={() => setNewEventModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 text-black font-extrabold text-xs"
                 >
-                  Reject Registration
+                  Cancel
                 </button>
                 <button
-                  onClick={() => handleApproveTeam(selectedTeamModal.id)}
-                  className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-md hover:bg-emerald-700"
+                  type="submit"
+                  className="px-6 py-2 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
                 >
-                  Approve & Assign Team ID
+                  Create Event
                 </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* MANUAL ATTENDANCE CORRECTION MODAL */}
+        {manualCorrectionModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white border-2 border-slate-300 max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-4 shadow-2xl text-black">
+              <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                <h3 className="text-lg font-black text-black">Manual Attendance Correction</h3>
+                <button onClick={() => setManualCorrectionModal(null)} className="p-2 text-slate-400 hover:text-black">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <p className="font-extrabold text-black">
+                  Updating status for member: <strong className="text-[#E43D12]">{manualCorrectionModal.memberName}</strong>
+                </p>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Status</label>
+                  <select
+                    value={manualStatusInput}
+                    onChange={(e: any) => setManualStatusInput(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-black"
+                  >
+                    <option value="PRESENT">PRESENT</option>
+                    <option value="ABSENT">ABSENT</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-black text-black mb-1">Correction Audit Note</label>
+                  <textarea
+                    rows={2}
+                    value={manualNoteInput}
+                    onChange={(e) => setManualNoteInput(e.target.value)}
+                    placeholder="Verified participant physically at venue counter."
+                    className="w-full px-3 py-2 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 border-t pt-4 border-slate-200">
+                  <button
+                    onClick={() => setManualCorrectionModal(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 text-black font-extrabold text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveManualAttendance}
+                    className="px-6 py-2 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md"
+                  >
+                    Save Correction & Log Audit
+                  </button>
+                </div>
               </div>
             </div>
           </div>

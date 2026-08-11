@@ -5,7 +5,13 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-supab
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1MB
+
 export async function uploadPaymentScreenshot(file: File): Promise<string> {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error('Screenshot file size exceeds 1MB limit. Please upload an image under 1MB.');
+  }
+
   // If Supabase credentials are configured, upload to 'payment-proofs' bucket
   if (supabaseUrl && !supabaseUrl.includes('your-supabase-project')) {
     try {
@@ -40,6 +46,10 @@ export async function uploadPaymentScreenshot(file: File): Promise<string> {
 }
 
 export async function uploadQrCodeImage(file: File): Promise<string> {
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error('QR Code image size exceeds 1MB limit. Please upload an image under 1MB.');
+  }
+
   if (supabaseUrl && !supabaseUrl.includes('your-supabase-project')) {
     try {
       const fileExt = file.name.split('.').pop() || 'png';
@@ -70,3 +80,4 @@ export async function uploadQrCodeImage(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+

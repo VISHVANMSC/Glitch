@@ -89,7 +89,7 @@ function LoginForm() {
             <input
               type="email"
               required
-              placeholder="name@college.edu or admin@glitch.com"
+              placeholder="mail"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-[#E43D12] text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm"

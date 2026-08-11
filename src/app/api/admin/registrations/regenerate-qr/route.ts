@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { dataService } from '@/lib/dataService';
-import { sendApprovalEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
@@ -15,35 +14,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Team DB ID is required' }, { status: 400 });
     }
 
-    const updatedTeam = await dataService.approveTeam(teamDbId);
+    const updatedTeam = await dataService.regenerateTeamQr(teamDbId);
     if (!updatedTeam) {
-      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Team not found or has no assigned Team ID.' }, { status: 404 });
     }
 
-    // Log Audit Trail
     await dataService.logAudit({
       userId: sessionUser.userId,
       userEmail: sessionUser.email,
       userRole: sessionUser.role,
-      action: 'TEAM_APPROVE',
+      action: 'QR_REGENERATED',
       teamId: updatedTeam.teamId || updatedTeam.id,
-      details: `Approved team "${updatedTeam.teamName}" and generated Team ID ${updatedTeam.teamId}`,
+      details: `Regenerated QR & Barcode for team "${updatedTeam.teamName}" (${updatedTeam.teamId})`,
     });
 
-    if (updatedTeam.leader?.email) {
-      await sendApprovalEmail({
-        leaderEmail: updatedTeam.leader.email,
-        leaderName: updatedTeam.leader.name,
-        teamName: updatedTeam.teamName,
-        teamId: updatedTeam.teamId || 'GL-01',
-        qrCodeUrl: updatedTeam.qrCodeUrl,
-        barcodeUrl: updatedTeam.barcodeUrl,
-        members: updatedTeam.members,
-      });
-    }
-
     return NextResponse.json({
-      message: `Team "${updatedTeam.teamName}" approved successfully with ID ${updatedTeam.teamId}`,
+      message: `QR code & Barcode regenerated successfully for team "${updatedTeam.teamName}".`,
       team: updatedTeam,
     });
   } catch (error: any) {
