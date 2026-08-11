@@ -338,34 +338,54 @@ export const dataService = {
 
   // Teams & Registrations
   async getTeamByLeaderId(leaderId: string) {
+    let team: any = null;
     try {
-      return await prisma.team.findFirst({
+      team = await prisma.team.findFirst({
         where: { leaderId },
         include: { members: true, selectedPs: true },
       });
     } catch {
-      const team = memoryStore.teams.find((t) => t.leaderId === leaderId);
-      if (!team) return null;
-      const members = memoryStore.teamMembers.filter((m) => m.teamId === team.id);
-      const selectedPs = memoryStore.problemStatements.find((p) => p.id === team.selectedPsId) || null;
-      return { ...team, members, selectedPs };
+      const rawTeam = memoryStore.teams.find((t) => t.leaderId === leaderId);
+      if (!rawTeam) return null;
+      const members = memoryStore.teamMembers.filter((m) => m.teamId === rawTeam.id);
+      const selectedPs = memoryStore.problemStatements.find((p) => p.id === rawTeam.selectedPsId) || null;
+      team = { ...rawTeam, members, selectedPs };
     }
+
+    if (team && team.status === 'APPROVED' && (!team.qrCodeUrl || team.qrCodeUrl.length < 200 || !team.barcodeUrl || team.barcodeUrl.length < 200)) {
+      const generated = await generateTeamQrAndBarcode(team.teamId || 'GL-01');
+      team.qrCodeUrl = generated.qrCodeUrl;
+      team.barcodeUrl = generated.barcodeUrl;
+    }
+
+    return team;
   },
 
   async getAllTeams() {
+    let teams: any[] = [];
     try {
-      return await prisma.team.findMany({
+      teams = await prisma.team.findMany({
         include: { leader: true, members: true, selectedPs: true },
         orderBy: { createdAt: 'desc' },
       });
     } catch {
-      return memoryStore.teams.map((t) => {
+      teams = memoryStore.teams.map((t) => {
         const leader = memoryStore.users.find((u) => u.id === t.leaderId);
         const members = memoryStore.teamMembers.filter((m) => m.teamId === t.id);
         const selectedPs = memoryStore.problemStatements.find((p) => p.id === t.selectedPsId) || null;
         return { ...t, leader, members, selectedPs };
       });
     }
+
+    for (const team of teams) {
+      if (team.status === 'APPROVED' && (!team.qrCodeUrl || team.qrCodeUrl.length < 200 || !team.barcodeUrl || team.barcodeUrl.length < 200)) {
+        const generated = await generateTeamQrAndBarcode(team.teamId || 'GL-01');
+        team.qrCodeUrl = generated.qrCodeUrl;
+        team.barcodeUrl = generated.barcodeUrl;
+      }
+    }
+
+    return teams;
   },
 
   async checkUniqueMembers(
