@@ -20,7 +20,10 @@ import {
   Volume2,
   Shield,
   Layers,
+  CameraOff,
+  SwitchCamera,
 } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { playSuccessBeep, playErrorBeep } from '@/lib/audio';
 
 export default function ScannerDashboard() {
@@ -37,9 +40,13 @@ export default function ScannerDashboard() {
 
   const [feedback, setFeedback] = useState<{ type: 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO'; message: string } | null>(null);
   const [recentScans, setRecentScans] = useState<any[]>([]);
+  
+  // Phone Camera Scanner State
   const [cameraActive, setCameraActive] = useState(false);
-
+  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const scanInputRef = useRef<HTMLInputElement>(null);
+  const lastScannedCodeRef = useRef<string>('');
+  const lastScanTimeRef = useRef<number>(0);
 
   // Clock Ticker
   useEffect(() => {
@@ -75,17 +82,74 @@ export default function ScannerDashboard() {
     }
   };
 
-  // Focus scan input automatically for hardware scanners
+  // Smartphone Camera Scanner Lifecycle (Html5Qrcode)
   useEffect(() => {
-    if (scanInputRef.current && !scannedTeam) {
+    let isMounted = true;
+
+    if (cameraActive && selectedEventId) {
+      const elementId = 'phone-qr-reader';
+      const html5QrCode = new Html5Qrcode(elementId);
+      html5QrCodeRef.current = html5QrCode;
+
+      html5QrCode
+        .start(
+          { facingMode: 'environment' }, // Prefers phone rear camera
+          {
+            fps: 10,
+            qrbox: { width: 240, height: 240 },
+          },
+          (decodedText) => {
+            if (!isMounted) return;
+            const now = Date.now();
+            // Debounce duplicate camera triggers within 3 seconds
+            if (decodedText === lastScannedCodeRef.current && now - lastScanTimeRef.current < 3000) {
+              return;
+            }
+            lastScannedCodeRef.current = decodedText;
+            lastScanTimeRef.current = now;
+            processScannedCode(decodedText);
+          },
+          () => {
+            // Ignore scan frame decode errors
+          }
+        )
+        .catch((err) => {
+          console.error('Camera initialization failed:', err);
+          if (isMounted) {
+            setCameraActive(false);
+            setFeedback({
+              type: 'ERROR',
+              message: 'Camera permission denied or camera not accessible on this device.',
+            });
+            playErrorBeep();
+          }
+        });
+    }
+
+    return () => {
+      isMounted = false;
+      if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+        html5QrCodeRef.current
+          .stop()
+          .then(() => {
+            html5QrCodeRef.current?.clear();
+            html5QrCodeRef.current = null;
+          })
+          .catch((err) => console.error('Error stopping camera:', err));
+      }
+    };
+  }, [cameraActive, selectedEventId]);
+
+  // Focus scan input automatically for hardware scanners / manual input
+  useEffect(() => {
+    if (scanInputRef.current && !scannedTeam && !cameraActive) {
       scanInputRef.current.focus();
     }
-  }, [scannedTeam, selectedEventId]);
+  }, [scannedTeam, selectedEventId, cameraActive]);
 
-  const handleCodeScanSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const code = scanCodeInput.trim();
-    if (!code) return;
+  const processScannedCode = async (code: string) => {
+    const cleanCode = code.trim();
+    if (!cleanCode) return;
 
     if (!selectedEventId) {
       setFeedback({ type: 'ERROR', message: 'Please select an active scanning event first.' });
@@ -100,7 +164,7 @@ export default function ScannerDashboard() {
       const res = await fetch('/api/scanner/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, eventId: selectedEventId }),
+        body: JSON.stringify({ code: cleanCode, eventId: selectedEventId }),
       });
 
       const data = await res.json();
@@ -135,6 +199,11 @@ export default function ScannerDashboard() {
     } finally {
       setLoadingScan(false);
     }
+  };
+
+  const handleManualFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    processScannedCode(scanCodeInput);
   };
 
   const toggleMemberSelection = (memberId: string) => {
@@ -205,7 +274,7 @@ export default function ScannerDashboard() {
       // Reset team view for next scan
       setScannedTeam(null);
       setMembersList([]);
-      if (scanInputRef.current) scanInputRef.current.focus();
+      if (scanInputRef.current && !cameraActive) scanInputRef.current.focus();
     } catch (err: any) {
       setFeedback({ type: 'ERROR', message: err.message || 'Submission error' });
       playErrorBeep();
@@ -329,18 +398,62 @@ export default function ScannerDashboard() {
             </div>
           )}
 
-          {/* Quick Code Scan Input Card */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-              <QrCode className="w-32 h-32 text-indigo-400" />
+          {/* Smartphone Camera Scanner Card */}
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-indigo-400" />
+                <h2 className="text-base font-bold text-white">Phone Camera Scanner</h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCameraActive(!cameraActive)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-2 shadow-lg ${
+                  cameraActive
+                    ? 'bg-red-600 hover:bg-red-500 text-white'
+                    : 'bg-indigo-600 hover:bg-indigo-500 text-white'
+                }`}
+              >
+                {cameraActive ? (
+                  <>
+                    <CameraOff className="w-4 h-4" />
+                    <span>Stop Camera</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-4 h-4" />
+                    <span>Start Phone Camera</span>
+                  </>
+                )}
+              </button>
             </div>
 
-            <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+            {/* Camera Viewport Container */}
+            {cameraActive ? (
+              <div className="space-y-2">
+                <div className="relative rounded-2xl overflow-hidden border-2 border-indigo-500 bg-black min-h-[260px] flex items-center justify-center">
+                  <div id="phone-qr-reader" className="w-full text-white" />
+                </div>
+                <p className="text-xs text-center text-indigo-300 font-semibold animate-pulse">
+                  📷 Point phone camera at participant's QR code. Scanning runs automatically...
+                </p>
+              </div>
+            ) : (
+              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center text-xs text-slate-400">
+                Tap <strong className="text-indigo-400">Start Phone Camera</strong> to scan team QR codes directly using your smartphone's rear camera.
+              </div>
+            )}
+          </div>
+
+          {/* Manual Input / Hardware Scanner Card */}
+          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
               <Zap className="w-4 h-4 text-indigo-400" />
-              Scan Team QR Code / Barcode
+              Manual Code Input / USB Hardware Scanner
             </h2>
 
-            <form onSubmit={handleCodeScanSubmit} className="flex flex-col sm:flex-row gap-3">
+            <form onSubmit={handleManualFormSubmit} className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                   <Search className="w-4 h-4" />
@@ -350,7 +463,7 @@ export default function ScannerDashboard() {
                   type="text"
                   value={scanCodeInput}
                   onChange={(e) => setScanCodeInput(e.target.value)}
-                  placeholder="Scan QR/Barcode or enter Team ID (e.g. GL-01)..."
+                  placeholder="Type Team ID (e.g. GL-01) or scan barcode..."
                   className="w-full pl-10 pr-4 py-3 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   disabled={loadingScan}
                 />
@@ -359,22 +472,18 @@ export default function ScannerDashboard() {
               <button
                 type="submit"
                 disabled={loadingScan || !scanCodeInput.trim()}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl shadow-lg disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2"
+                className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm rounded-xl shadow-md disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2 border border-slate-700"
               >
                 {loadingScan ? (
-                  <span>Fetching Team...</span>
+                  <span>Fetching...</span>
                 ) : (
                   <>
-                    <QrCode className="w-4 h-4" />
-                    <span>Scan Team</span>
+                    <Search className="w-4 h-4" />
+                    <span>Search Team</span>
                   </>
                 )}
               </button>
             </form>
-
-            <p className="text-xs text-slate-500 mt-2">
-              💡 Tip: Plug in a hardware USB Barcode/QR scanner to automatically scan and fetch teams instantly on enter.
-            </p>
           </div>
 
           {/* Active Scanned Team Card & Attendance Checklist */}
@@ -398,14 +507,14 @@ export default function ScannerDashboard() {
                   <button
                     type="button"
                     onClick={selectAllMembers}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition cursor-pointer"
                   >
                     Select All
                   </button>
                   <button
                     type="button"
                     onClick={deselectAllMembers}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition"
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition cursor-pointer"
                   >
                     Deselect All
                   </button>
@@ -491,11 +600,11 @@ export default function ScannerDashboard() {
               </div>
             </div>
           ) : (
-            <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-12 text-center text-slate-500">
+            <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-10 text-center text-slate-500">
               <QrCode className="w-16 h-16 mx-auto mb-4 text-slate-700 animate-pulse" />
               <h3 className="text-lg font-bold text-slate-300">Ready to Scan Team Pass</h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                Scan team QR Code or Barcode using your hardware scanner, camera, or search input above to load team members for check-in.
+                Point your smartphone camera at a participant's QR code or type their Team ID above to load team members for gate check-in.
               </p>
             </div>
           )}
