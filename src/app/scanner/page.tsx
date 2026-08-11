@@ -21,7 +21,8 @@ import {
   Shield,
   Layers,
   CameraOff,
-  SwitchCamera,
+  X,
+  Bell,
 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { playSuccessBeep, playErrorBeep } from '@/lib/audio';
@@ -41,6 +42,10 @@ export default function ScannerDashboard() {
   const [feedback, setFeedback] = useState<{ type: 'SUCCESS' | 'ERROR' | 'WARNING' | 'INFO'; message: string } | null>(null);
   const [recentScans, setRecentScans] = useState<any[]>([]);
   
+  // Popup Modal States for Visual & Audio Feedback
+  const [showScanPopupModal, setShowScanPopupModal] = useState(false);
+  const [showErrorPopupModal, setShowErrorPopupModal] = useState<string | null>(null);
+
   // Phone Camera Scanner State
   const [cameraActive, setCameraActive] = useState(false);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -93,7 +98,7 @@ export default function ScannerDashboard() {
 
       html5QrCode
         .start(
-          { facingMode: 'environment' }, // Prefers phone rear camera
+          { facingMode: 'environment' },
           {
             fps: 10,
             qrbox: { width: 240, height: 240 },
@@ -101,7 +106,6 @@ export default function ScannerDashboard() {
           (decodedText) => {
             if (!isMounted) return;
             const now = Date.now();
-            // Debounce duplicate camera triggers within 3 seconds
             if (decodedText === lastScannedCodeRef.current && now - lastScanTimeRef.current < 3000) {
               return;
             }
@@ -117,10 +121,7 @@ export default function ScannerDashboard() {
           console.error('Camera initialization failed:', err);
           if (isMounted) {
             setCameraActive(false);
-            setFeedback({
-              type: 'ERROR',
-              message: 'Camera permission denied or camera not accessible on this device.',
-            });
+            setShowErrorPopupModal('Camera permission denied or camera not accessible on this device.');
             playErrorBeep();
           }
         });
@@ -142,23 +143,24 @@ export default function ScannerDashboard() {
 
   // Focus scan input automatically for hardware scanners / manual input
   useEffect(() => {
-    if (scanInputRef.current && !scannedTeam && !cameraActive) {
+    if (scanInputRef.current && !showScanPopupModal && !cameraActive) {
       scanInputRef.current.focus();
     }
-  }, [scannedTeam, selectedEventId, cameraActive]);
+  }, [showScanPopupModal, selectedEventId, cameraActive]);
 
   const processScannedCode = async (code: string) => {
     const cleanCode = code.trim();
     if (!cleanCode) return;
 
     if (!selectedEventId) {
-      setFeedback({ type: 'ERROR', message: 'Please select an active scanning event first.' });
+      setShowErrorPopupModal('Please select an active scanning event first.');
       playErrorBeep();
       return;
     }
 
     setLoadingScan(true);
     setFeedback(null);
+    setShowErrorPopupModal(null);
 
     try {
       const res = await fetch('/api/scanner/scan', {
@@ -170,13 +172,16 @@ export default function ScannerDashboard() {
       const data = await res.json();
 
       if (!res.ok) {
-        setFeedback({ type: 'ERROR', message: data.error || 'Invalid or unapproved team scan.' });
+        // Play error buzzer and pop up error modal
         playErrorBeep();
+        setShowErrorPopupModal(data.error || 'Invalid or unapproved team scan.');
         setScannedTeam(null);
         setMembersList([]);
         return;
       }
 
+      // Successful Scan! Play loud beep sound
+      playSuccessBeep();
       setScannedTeam(data.team);
       setMembersList(data.members || []);
 
@@ -185,17 +190,19 @@ export default function ScannerDashboard() {
           type: 'WARNING',
           message: data.warningMessage || `Team "${data.team.teamName}" has ALREADY been scanned for this event!`,
         });
-        playErrorBeep();
       } else {
         setFeedback({
-          type: 'INFO',
-          message: `Team "${data.team.teamName}" (${data.team.teamId}) loaded. All members selected by default.`,
+          type: 'SUCCESS',
+          message: `Team "${data.team.teamName}" (${data.team.teamId}) successfully scanned and loaded.`,
         });
       }
+
+      // Pop up team verification modal
+      setShowScanPopupModal(true);
       setScanCodeInput('');
     } catch (err: any) {
-      setFeedback({ type: 'ERROR', message: err.message || 'Scan verification failed.' });
       playErrorBeep();
+      setShowErrorPopupModal(err.message || 'Scan verification failed.');
     } finally {
       setLoadingScan(false);
     }
@@ -244,12 +251,12 @@ export default function ScannerDashboard() {
       const data = await res.json();
 
       if (!res.ok) {
-        setFeedback({ type: 'ERROR', message: data.error || 'Failed to submit attendance.' });
+        setShowErrorPopupModal(data.error || 'Failed to submit attendance.');
         playErrorBeep();
         return;
       }
 
-      // Play high chime sound for success
+      // Play success chime sound again for attendance confirmation
       playSuccessBeep();
       setFeedback({
         type: 'SUCCESS',
@@ -271,12 +278,13 @@ export default function ScannerDashboard() {
         ...prev.slice(0, 9),
       ]);
 
-      // Reset team view for next scan
+      // Close popup modal and reset for next scan
+      setShowScanPopupModal(false);
       setScannedTeam(null);
       setMembersList([]);
       if (scanInputRef.current && !cameraActive) scanInputRef.current.focus();
     } catch (err: any) {
-      setFeedback({ type: 'ERROR', message: err.message || 'Submission error' });
+      setShowErrorPopupModal(err.message || 'Submission error');
       playErrorBeep();
     } finally {
       setSubmitting(false);
@@ -311,6 +319,15 @@ export default function ScannerDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => playSuccessBeep()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-300 text-xs font-semibold rounded-lg transition cursor-pointer border border-indigo-500/30"
+              title="Test Audio Beep Sound"
+            >
+              <Volume2 className="w-4 h-4 text-indigo-400" />
+              <span className="hidden sm:inline">Test Sound Beep</span>
+            </button>
+
             <div className="hidden sm:flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-lg border border-slate-800 text-xs font-mono text-indigo-300">
               <Clock className="w-3.5 h-3.5" />
               <span>{currentTime}</span>
@@ -370,7 +387,7 @@ export default function ScannerDashboard() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Scanner & Team Control Panel (8 cols) */}
+        {/* Left Scanner Control Panel (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Feedback Banner */}
           {feedback && (
@@ -436,12 +453,12 @@ export default function ScannerDashboard() {
                   <div id="phone-qr-reader" className="w-full text-white" />
                 </div>
                 <p className="text-xs text-center text-indigo-300 font-semibold animate-pulse">
-                  📷 Point phone camera at participant's QR code. Scanning runs automatically...
+                  📷 Point phone camera at participant's QR code. Beep sound plays automatically upon QR detection...
                 </p>
               </div>
             ) : (
               <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 text-center text-xs text-slate-400">
-                Tap <strong className="text-indigo-400">Start Phone Camera</strong> to scan team QR codes directly using your smartphone's rear camera.
+                Tap <strong className="text-indigo-400">Start Phone Camera</strong> to scan team QR codes directly using your smartphone camera with audio beep feedback.
               </div>
             )}
           </div>
@@ -486,125 +503,13 @@ export default function ScannerDashboard() {
             </form>
           </div>
 
-          {/* Active Scanned Team Card & Attendance Checklist */}
-          {scannedTeam ? (
-            <div className="bg-slate-900/90 border border-indigo-500/30 rounded-2xl p-6 shadow-2xl space-y-6">
-              {/* Team Info Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black rounded-lg">
-                      {scannedTeam.teamId}
-                    </span>
-                    <h3 className="text-xl font-extrabold text-white">{scannedTeam.teamName}</h3>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Leader: <span className="text-slate-200 font-semibold">{scannedTeam.leaderName}</span> • Total Members: <span className="text-indigo-400 font-semibold">{scannedTeam.teamSize}</span>
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={selectAllMembers}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition cursor-pointer"
-                  >
-                    Select All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={deselectAllMembers}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition cursor-pointer"
-                  >
-                    Deselect All
-                  </button>
-                </div>
-              </div>
-
-              {/* Members Checklist */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                    <Users className="w-4 h-4 text-indigo-400" />
-                    Check-In Team Members ({membersList.filter((m) => m.selected).length}/{membersList.length} Selected)
-                  </h4>
-                  <span className="text-xs text-slate-400">
-                    Deselect physically absent members
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {membersList.map((m) => (
-                    <div
-                      key={m.id}
-                      onClick={() => toggleMemberSelection(m.id)}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                        m.selected
-                          ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-100 shadow-md'
-                          : 'bg-slate-950/60 border-slate-800 text-slate-400 opacity-60 hover:opacity-100'
-                      }`}
-                    >
-                      <div className="mt-0.5">
-                        {m.selected ? (
-                          <CheckSquare className="w-5 h-5 text-emerald-400" />
-                        ) : (
-                          <Square className="w-5 h-5 text-slate-600" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-sm text-white truncate">{m.name}</span>
-                          {m.isLeader && (
-                            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-extrabold uppercase">
-                              Leader
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5 truncate">{m.department || m.college || 'Participant'}</p>
-                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">{m.phone || m.email}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScannedTeam(null);
-                    setMembersList([]);
-                    setFeedback(null);
-                  }}
-                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm rounded-xl transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleConfirmAttendance}
-                  disabled={submitting || membersList.filter((m) => m.selected).length === 0}
-                  className="flex-1 py-3.5 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-base rounded-xl shadow-lg shadow-emerald-600/20 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <span>Confirming Attendance...</span>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>Confirm Attendance ({membersList.filter((m) => m.selected).length} Members)</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          ) : (
+          {/* Default Ready State Card when no popup active */}
+          {!scannedTeam && (
             <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl p-10 text-center text-slate-500">
-              <QrCode className="w-16 h-16 mx-auto mb-4 text-slate-700 animate-pulse" />
+              <QrCode className="w-16 h-16 mx-auto mb-4 text-indigo-500/40 animate-pulse" />
               <h3 className="text-lg font-bold text-slate-300">Ready to Scan Team Pass</h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-                Point your smartphone camera at a participant's QR code or type their Team ID above to load team members for gate check-in.
+                Point your smartphone camera at a participant's QR code or type their Team ID. A scan success popup and audio chime will trigger immediately!
               </p>
             </div>
           )}
@@ -686,6 +591,167 @@ export default function ScannerDashboard() {
           </div>
         </div>
       </main>
+
+      {/* POPUP MODAL 1: PROMINENT TEAM SCAN VERIFICATION & ATTENDANCE POPUP */}
+      {showScanPopupModal && scannedTeam && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-2 border-emerald-500 max-w-2xl w-full rounded-3xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto shadow-2xl text-white relative">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-lg animate-bounce">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider">
+                      🟢 QR SCAN VERIFIED
+                    </span>
+                    <span className="font-mono text-sm font-black text-emerald-400">
+                      {scannedTeam.teamId}
+                    </span>
+                  </div>
+                  <h2 className="text-2xl font-black text-white mt-1">
+                    Team "{scannedTeam.teamName}"
+                  </h2>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowScanPopupModal(false)}
+                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Team Leader & Institution Details */}
+            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-slate-400 font-semibold block">Team Leader</span>
+                <span className="font-bold text-slate-200 text-sm">{scannedTeam.leaderName}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 font-semibold block">Institution</span>
+                <span className="font-bold text-indigo-400 text-sm truncate block">{scannedTeam.members?.[0]?.college || 'College'}</span>
+              </div>
+            </div>
+
+            {/* Interactive Attendance Roster Checklist inside Popup */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <Users className="w-4 h-4 text-indigo-400" />
+                  Select Present Members ({membersList.filter((m) => m.selected).length}/{membersList.length})
+                </h3>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={selectAllMembers}
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={deselectAllMembers}
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
+                {membersList.map((m) => (
+                  <div
+                    key={m.id}
+                    onClick={() => toggleMemberSelection(m.id)}
+                    className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                      m.selected
+                        ? 'bg-emerald-500/15 border-emerald-500/50 text-emerald-100 shadow-md'
+                        : 'bg-slate-950/60 border-slate-800 text-slate-400 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="mt-0.5">
+                      {m.selected ? (
+                        <CheckSquare className="w-5 h-5 text-emerald-400" />
+                      ) : (
+                        <Square className="w-5 h-5 text-slate-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-white truncate">{m.name}</span>
+                        {m.isLeader && (
+                          <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-extrabold uppercase">
+                            Leader
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">{m.department || 'Participant'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Modal Action Buttons */}
+            <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => setShowScanPopupModal(false)}
+                className="px-5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition cursor-pointer"
+              >
+                Scan Next QR
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmAttendance}
+                disabled={submitting || membersList.filter((m) => m.selected).length === 0}
+                className="flex-1 py-3.5 px-6 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-xl shadow-emerald-600/30 disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2"
+              >
+                {submitting ? (
+                  <span>Saving Attendance...</span>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Confirm Attendance ({membersList.filter((m) => m.selected).length} Members)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL 2: SCAN ERROR / INVALID QR POPUP MODAL */}
+      {showErrorPopupModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-2 border-red-500 max-w-md w-full rounded-3xl p-6 text-center space-y-5 shadow-2xl text-white">
+            <div className="w-16 h-16 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 mx-auto animate-bounce">
+              <XCircle className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-red-400 uppercase tracking-wider">
+                Invalid or Unapproved QR Code
+              </h3>
+              <p className="text-sm font-semibold text-slate-300">
+                {showErrorPopupModal}
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowErrorPopupModal(null)}
+              className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg cursor-pointer transition"
+            >
+              Dismiss & Scan Next QR
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
