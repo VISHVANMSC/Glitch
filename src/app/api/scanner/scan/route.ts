@@ -46,6 +46,19 @@ export async function POST(req: Request) {
     const existingRecords = await dataService.checkDuplicateAttendance(eventId, memberIds);
     const isAlreadyScanned = existingRecords.length > 0;
 
+    if (isAlreadyScanned && !activeEvent.allowDuplicate) {
+      return NextResponse.json({
+        error: `DUPLICATE SCAN BLOCKED! Team "${team.teamName}" (${team.teamId}) has ALREADY checked in for event "${activeEvent.name}". Duplicate scans are strictly prohibited.`,
+        isDuplicate: true,
+        team: {
+          id: team.id,
+          teamId: team.teamId,
+          teamName: team.teamName,
+          teamSize: team.teamSize,
+        },
+      }, { status: 409 });
+    }
+
     return NextResponse.json({
       success: true,
       event: activeEvent,
@@ -76,9 +89,6 @@ export async function POST(req: Request) {
       }),
       isAlreadyScanned,
       allowDuplicate: activeEvent.allowDuplicate,
-      warningMessage: isAlreadyScanned && !activeEvent.allowDuplicate
-        ? `Team "${team.teamName}" (${team.teamId}) has ALREADY been scanned for "${activeEvent.name}".`
-        : null,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 });

@@ -24,12 +24,11 @@ export async function POST(req: Request) {
 
     // 2. Duplicate Protection Check (if not allowed)
     if (!activeEvent.allowDuplicate) {
-      const memberIds = memberSelections.map((m) => m.memberId);
+      const memberIds = memberSelections.map((m: any) => m.memberId);
       const existing = await dataService.checkDuplicateAttendance(eventId, memberIds);
-      if (existing.length > 0 && sessionUser.role !== 'ADMIN') {
-        // If already recorded and user is not admin override
+      if (existing.length > 0) {
         return NextResponse.json({
-          error: `Attendance for this team has already been recorded for "${activeEvent.name}". Duplicate scans are not allowed.`,
+          error: `DUPLICATE CHECK-IN BLOCKED! Attendance for this team has already been recorded for event "${activeEvent.name}". Duplicate check-ins are strictly prohibited.`,
           isDuplicate: true,
         }, { status: 409 });
       }
