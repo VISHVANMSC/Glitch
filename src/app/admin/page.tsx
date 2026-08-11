@@ -57,6 +57,9 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedTeamModal, setSelectedTeamModal] = useState<any>(null);
   const [rejectionReasonInput, setRejectionReasonInput] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [modalError, setModalError] = useState('');
+  const [modalSuccess, setModalSuccess] = useState('');
 
   // Attendance Dashboard State
   const [attendanceData, setAttendanceData] = useState<any>(null);
@@ -194,6 +197,9 @@ export default function AdminDashboard() {
   const handleApproveTeam = async (teamDbId: string) => {
     setError('');
     setMessage('');
+    setModalError('');
+    setModalSuccess('');
+    setActionLoading(true);
     try {
       const res = await fetch('/api/admin/registrations/approve', {
         method: 'POST',
@@ -202,22 +208,33 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Approval failed');
+      
+      setModalSuccess(data.message);
       setMessage(data.message);
-      setSelectedTeamModal(null);
+
+      if (data.team) {
+        setSelectedTeamModal(data.team);
+      }
       fetchAdminData();
     } catch (err: any) {
-      setError(err.message);
+      setModalError(err.message || 'Approval failed');
+      setError(err.message || 'Approval failed');
+    } finally {
+      setActionLoading(false);
     }
   };
 
   // Handler: Reject Team
   const handleRejectTeam = async (teamDbId: string) => {
     if (!rejectionReasonInput.trim()) {
-      setError('Please enter a valid rejection reason.');
+      setModalError('Please enter a valid rejection reason below.');
       return;
     }
     setError('');
     setMessage('');
+    setModalError('');
+    setModalSuccess('');
+    setActionLoading(true);
     try {
       const res = await fetch('/api/admin/registrations/reject', {
         method: 'POST',
@@ -226,12 +243,20 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Rejection failed');
+      
+      setModalSuccess(data.message);
       setMessage(data.message);
-      setSelectedTeamModal(null);
+
+      if (data.team) {
+        setSelectedTeamModal(data.team);
+      }
       setRejectionReasonInput('');
       fetchAdminData();
     } catch (err: any) {
-      setError(err.message);
+      setModalError(err.message || 'Rejection failed');
+      setError(err.message || 'Rejection failed');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -1664,6 +1689,19 @@ export default function AdminDashboard() {
               </div>
 
               <div className="space-y-4 text-xs">
+                {modalError && (
+                  <div className="p-3 rounded-xl bg-red-50 border-2 border-red-300 text-xs font-black text-red-700 flex items-center justify-between shadow-xs">
+                    <span>⚠️ {modalError}</span>
+                    <button type="button" onClick={() => setModalError('')}><X className="w-4 h-4" /></button>
+                  </div>
+                )}
+                {modalSuccess && (
+                  <div className="p-3 rounded-xl bg-emerald-50 border-2 border-emerald-300 text-xs font-black text-emerald-800 flex items-center justify-between shadow-xs">
+                    <span>✅ {modalSuccess}</span>
+                    <button type="button" onClick={() => setModalSuccess('')}><X className="w-4 h-4" /></button>
+                  </div>
+                )}
+
                 {/* Official QR & Barcode Card for Approved Teams */}
                 {selectedTeamModal.status === 'APPROVED' && selectedTeamModal.qrCodeUrl && (
                   <div className="p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-center space-y-3">
@@ -1802,16 +1840,27 @@ export default function AdminDashboard() {
               {selectedTeamModal.status === 'PENDING' && (
                 <div className="flex items-center justify-between border-t pt-4 border-slate-200">
                   <button
+                    type="button"
+                    disabled={actionLoading}
                     onClick={() => handleRejectTeam(selectedTeamModal.id)}
-                    className="px-5 py-2.5 rounded-xl bg-red-600 text-white font-extrabold text-xs shadow-md hover:bg-red-700 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-2"
                   >
-                    Reject Registration
+                    {actionLoading ? 'Processing...' : 'Reject Registration'}
                   </button>
                   <button
+                    type="button"
+                    disabled={actionLoading}
                     onClick={() => handleApproveTeam(selectedTeamModal.id)}
-                    className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-extrabold text-xs shadow-md hover:bg-emerald-700 cursor-pointer"
+                    className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-2"
                   >
-                    Approve & Issue Team QR Pass
+                    {actionLoading ? (
+                      <span>Approving & Generating Pass...</span>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 text-white" />
+                        <span>Approve & Issue Team QR Pass</span>
+                      </>
+                    )}
                   </button>
                 </div>
               )}
