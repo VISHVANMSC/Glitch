@@ -273,7 +273,8 @@ export const dataService = {
           allowedEvents: data.allowedEvents || null,
         },
       });
-    } catch {
+    } catch (err) {
+      console.error('[dataService.createUser Database Error]:', err);
       const newUser = {
         id: `user-${Date.now()}`,
         name: data.name,
@@ -535,7 +536,8 @@ export const dataService = {
         },
         include: { members: true },
       });
-    } catch {
+    } catch (err) {
+      console.error('[dataService.createTeam Database Error]:', err);
       const teamId = `team-${Date.now()}`;
       const newTeam = {
         id: teamId,
@@ -575,6 +577,13 @@ export const dataService = {
   async approveTeam(teamDbId: string) {
     let assignedTeamId = 'GL-01';
     try {
+      // Look up target team by database primary key ID or assigned team ID
+      const targetTeam = await prisma.team.findFirst({
+        where: { OR: [{ id: teamDbId }, { teamId: teamDbId }] },
+      });
+
+      const targetId = targetTeam ? targetTeam.id : teamDbId;
+
       const approvedCount = await prisma.team.count({
         where: { status: 'APPROVED' },
       });
@@ -585,7 +594,7 @@ export const dataService = {
       const qrBarcode = await generateTeamQrAndBarcode(assignedTeamId);
 
       const updated = await prisma.team.update({
-        where: { id: teamDbId },
+        where: { id: targetId },
         data: {
           status: 'APPROVED',
           paymentStatus: 'VERIFIED',
@@ -600,14 +609,15 @@ export const dataService = {
       });
 
       return updated;
-    } catch {
+    } catch (err) {
+      console.error('[dataService.approveTeam Database Error]:', err);
       const approvedTeams = memoryStore.teams.filter((t) => t.status === 'APPROVED');
       const nextNum = approvedTeams.length + 1;
       assignedTeamId = `GL-${nextNum < 10 ? '0' + nextNum : nextNum}`;
 
       const qrBarcode = await generateTeamQrAndBarcode(assignedTeamId);
 
-      const index = memoryStore.teams.findIndex((t) => t.id === teamDbId);
+      const index = memoryStore.teams.findIndex((t) => t.id === teamDbId || t.teamId === teamDbId);
       if (index !== -1) {
         memoryStore.teams[index].status = 'APPROVED';
         memoryStore.teams[index].paymentStatus = 'VERIFIED';
@@ -618,7 +628,7 @@ export const dataService = {
         memoryStore.teams[index].qrCodeUrl = qrBarcode.qrCodeUrl;
         memoryStore.teams[index].barcodeUrl = qrBarcode.barcodeUrl;
         const leader = memoryStore.users.find((u) => u.id === memoryStore.teams[index].leaderId);
-        const members = memoryStore.teamMembers.filter((m) => m.teamId === teamDbId);
+        const members = memoryStore.teamMembers.filter((m) => m.teamId === memoryStore.teams[index].id);
         return { ...memoryStore.teams[index], leader, members };
       }
       return null;
@@ -627,13 +637,15 @@ export const dataService = {
 
   async regenerateTeamQr(teamDbId: string) {
     try {
-      const team = await prisma.team.findUnique({ where: { id: teamDbId } });
+      const team = await prisma.team.findFirst({
+        where: { OR: [{ id: teamDbId }, { teamId: teamDbId }] },
+      });
       if (!team || !team.teamId) throw new Error('Team or Team ID not found');
 
       const qrBarcode = await generateTeamQrAndBarcode(team.teamId);
 
       return await prisma.team.update({
-        where: { id: teamDbId },
+        where: { id: team.id },
         data: {
           qrCodeData: qrBarcode.qrCodeData,
           barcodeData: qrBarcode.barcodeData,
@@ -642,8 +654,9 @@ export const dataService = {
         },
         include: { leader: true, members: true },
       });
-    } catch {
-      const team = memoryStore.teams.find((t) => t.id === teamDbId);
+    } catch (err) {
+      console.error('[dataService.regenerateTeamQr Database Error]:', err);
+      const team = memoryStore.teams.find((t) => t.id === teamDbId || t.teamId === teamDbId);
       if (!team || !team.teamId) return null;
 
       const qrBarcode = await generateTeamQrAndBarcode(team.teamId);
@@ -653,15 +666,20 @@ export const dataService = {
       team.barcodeUrl = qrBarcode.barcodeUrl;
 
       const leader = memoryStore.users.find((u) => u.id === team.leaderId);
-      const members = memoryStore.teamMembers.filter((m) => m.teamId === teamDbId);
+      const members = memoryStore.teamMembers.filter((m) => m.teamId === team.id);
       return { ...team, leader, members };
     }
   },
 
   async rejectTeam(teamDbId: string, rejectionReason: string) {
     try {
+      const targetTeam = await prisma.team.findFirst({
+        where: { OR: [{ id: teamDbId }, { teamId: teamDbId }] },
+      });
+      const targetId = targetTeam ? targetTeam.id : teamDbId;
+
       return await prisma.team.update({
-        where: { id: teamDbId },
+        where: { id: targetId },
         data: {
           status: 'REJECTED',
           paymentStatus: 'REJECTED',
@@ -669,14 +687,15 @@ export const dataService = {
         },
         include: { leader: true, members: true },
       });
-    } catch {
-      const index = memoryStore.teams.findIndex((t) => t.id === teamDbId);
+    } catch (err) {
+      console.error('[dataService.rejectTeam Database Error]:', err);
+      const index = memoryStore.teams.findIndex((t) => t.id === teamDbId || t.teamId === teamDbId);
       if (index !== -1) {
         memoryStore.teams[index].status = 'REJECTED';
         memoryStore.teams[index].paymentStatus = 'REJECTED';
         memoryStore.teams[index].rejectionReason = rejectionReason;
         const leader = memoryStore.users.find((u) => u.id === memoryStore.teams[index].leaderId);
-        const members = memoryStore.teamMembers.filter((m) => m.teamId === teamDbId);
+        const members = memoryStore.teamMembers.filter((m) => m.teamId === memoryStore.teams[index].id);
         return { ...memoryStore.teams[index], leader, members };
       }
       return null;
