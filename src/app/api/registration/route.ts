@@ -94,11 +94,13 @@ export async function POST(req: Request) {
       members: validatedMembers,
     });
 
-    // Send automatic email notification
-    await sendRegistrationSubmittedEmail({
+    // Send automatic email notification (non-blocking catch)
+    sendRegistrationSubmittedEmail({
       leaderEmail: user.email,
       leaderName: user.name,
       teamName: team.teamName,
+    }).catch((err) => {
+      console.error('Failed to send registration submitted email:', err);
     });
 
     return NextResponse.json({

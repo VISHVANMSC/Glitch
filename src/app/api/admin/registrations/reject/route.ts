@@ -21,11 +21,13 @@ export async function POST(req: Request) {
     }
 
     if (updatedTeam.leader?.email) {
-      await sendRejectionEmail({
+      sendRejectionEmail({
         leaderEmail: updatedTeam.leader.email,
         leaderName: updatedTeam.leader.name,
         teamName: updatedTeam.teamName,
         rejectionReason,
+      }).catch((err) => {
+        console.error('Failed to send rejection email:', err);
       });
     }
 

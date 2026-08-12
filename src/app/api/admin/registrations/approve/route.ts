@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
 
     if (updatedTeam.leader?.email) {
-      await sendApprovalEmail({
+      sendApprovalEmail({
         leaderEmail: updatedTeam.leader.email,
         leaderName: updatedTeam.leader.name,
         teamName: updatedTeam.teamName,
@@ -39,6 +39,8 @@ export async function POST(req: Request) {
         qrCodeUrl: updatedTeam.qrCodeUrl,
         barcodeUrl: updatedTeam.barcodeUrl,
         members: updatedTeam.members,
+      }).catch((err) => {
+        console.error('Failed to send approval email:', err);
       });
     }
 

@@ -1,15 +1,29 @@
 import nodemailer from 'nodemailer';
+import dns from 'dns';
+
+// Prefer IPv4 to avoid ENETUNREACH issues on networks without IPv6 SMTP routing
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {
+  // Ignore if not supported in environment
+}
 
 const gmailUser = process.env.GMAIL_USER || 'glitch.hackathon.official@gmail.com';
-const gmailPass = process.env.GMAIL_APP_PASSWORD || '';
+const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
+const resendApiKey = process.env.RESEND_API_KEY || '';
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: gmailUser,
     pass: gmailPass,
   },
+  connectionTimeout: 8000,
+  greetingTimeout: 8000,
+  socketTimeout: 8000,
 });
 
 const EMAIL_HEADER = `
@@ -47,11 +61,47 @@ function htmlToPlainText(html: string): string {
     .trim();
 }
 
+async function sendViaResend({ to, subject, html }: { to: string; subject: string; html: string }) {
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: `GLITCH 1.0 <${fromEmail}>`,
+      to: [to],
+      subject,
+      html,
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || JSON.stringify(data));
+  }
+  return { success: true, messageId: data.id };
+}
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  // Option 1: Use Resend API over HTTPS (Port 443) if RESEND_API_KEY is configured
+  if (resendApiKey) {
+    try {
+      console.log(`[Resend Dispatch] To: ${to} | Subject: ${subject}`);
+      return await sendViaResend({ to, subject, html });
+    } catch (err: any) {
+      console.error(`[Resend Error] Failed to send via Resend API to ${to}:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Option 2: Fallback to mock mode if password missing or test value
   if (!gmailPass || gmailPass.includes('abcd')) {
     console.log(`[Email Mock Dispatch] To: ${to} | Subject: ${subject}`);
     return { success: true, mock: true };
   }
+
+  // Option 3: Nodemailer SMTP with timeouts
   try {
     const text = htmlToPlainText(html);
     const info = await transporter.sendMail({
@@ -69,8 +119,17 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     console.log(`[Email Sent] MessageId: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
-    console.error(`[Email Error] Failed to send to ${to}:`, error);
-    return { success: false, error: error.message };
+    console.error(`[Email Error] Failed to send to ${to}:`, error.message || error);
+    if (
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ENETUNREACH' ||
+      (error.message && error.message.toLowerCase().includes('timeout'))
+    ) {
+      console.warn(
+        `[SMTP Warning] Network blocked outbound SMTP connections (port 465/587). Set RESEND_API_KEY in .env to use HTTPS API (port 443) for email delivery.`
+      );
+    }
+    return { success: false, error: error.message || 'Email delivery failed' };
   }
 }
 
