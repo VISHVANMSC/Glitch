@@ -29,7 +29,6 @@ import {
   X,
   Layers,
   Upload,
-  Sparkles,
   CreditCard,
   Calendar,
   ShieldAlert,
@@ -97,8 +96,55 @@ export default function AdminDashboard() {
   // CMS Form State
   const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
   const [savingCms, setSavingCms] = useState(false);
+  const [cmsSuccessSaved, setCmsSuccessSaved] = useState(false);
   const [uploadingQr, setUploadingQr] = useState(false);
-  const [cmsSubTab, setCmsSubTab] = useState<'hero' | 'payment' | 'rules' | 'agenda'>('hero');
+  const [cmsSubTab, setCmsSubTab] = useState<'hero' | 'prizes' | 'payment' | 'rules' | 'agenda'>('hero');
+
+  // User-Friendly Interactive Date & Time Picker States
+  const [pickerStartDate, setPickerStartDate] = useState<string>('2026-10-24');
+  const [pickerEndDate, setPickerEndDate] = useState<string>('2026-10-25');
+  const [pickerTime, setPickerTime] = useState<string>('08:30');
+  const [pickerTimeSuffix, setPickerTimeSuffix] = useState<string>('IST (24 Hours Live Code)');
+
+  const formatEventDateRange = (startDateStr: string, endDateStr: string): string => {
+    if (!startDateStr) return '';
+    const start = new Date(startDateStr);
+    if (isNaN(start.getTime())) return startDateStr;
+
+    const monthNames = [
+      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+      'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+    ];
+
+    const month = monthNames[start.getMonth()];
+    const startDay = start.getDate();
+    const year = start.getFullYear();
+
+    if (endDateStr) {
+      const end = new Date(endDateStr);
+      if (!isNaN(end.getTime()) && end.getMonth() === start.getMonth() && end.getFullYear() === year) {
+        return `${month} ${startDay}-${end.getDate()}, ${year}`;
+      }
+      if (!isNaN(end.getTime())) {
+        return `${month} ${startDay} - ${monthNames[end.getMonth()]} ${end.getDate()}, ${year}`;
+      }
+    }
+
+    return `${month} ${startDay}, ${year}`;
+  };
+
+  const formatEventTime = (timeStr: string, suffix: string = 'IST (24 Hours Live Code)'): string => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    let h = parseInt(parts[0], 10);
+    if (isNaN(h)) return timeStr;
+    const m = parts[1] || '00';
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12;
+    const formattedH = String(h).padStart(2, '0');
+    return `${formattedH}:${m} ${ampm} ${suffix}`.trim();
+  };
 
   // Coordinators State
   const [coordinators, setCoordinators] = useState<any[]>([]);
@@ -408,6 +454,7 @@ export default function AdminDashboard() {
   const handleSaveCms = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingCms(true);
+    setCmsSuccessSaved(false);
     setError('');
     setMessage('');
     try {
@@ -418,7 +465,12 @@ export default function AdminDashboard() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'CMS save failed');
+      if (data.content) {
+        setCmsContent(data.content);
+      }
+      setCmsSuccessSaved(true);
       setMessage('Landing Page CMS settings updated successfully.');
+      setTimeout(() => setCmsSuccessSaved(false), 5000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -1436,6 +1488,7 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                 {[
                   { id: 'hero', label: 'Hero Banner' },
+                  { id: 'prizes', label: 'Prizes & Rewards' },
                   { id: 'payment', label: 'Bank & Payment' },
                   { id: 'rules', label: 'Rules & Guidelines' },
                   { id: 'agenda', label: 'Agenda & Timeline' },
@@ -1477,25 +1530,128 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">Event Dates</label>
-                    <input
-                      type="text"
-                      value={cmsContent.eventDate || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, eventDate: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
-                    />
+                {/* User-Friendly Interactive Date & Time Picker Controls */}
+                <div className="p-5 rounded-2xl bg-slate-50 border-2 border-slate-200 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black text-black uppercase tracking-wider">
+                      <Calendar className="w-4 h-4 text-[#E43D12]" /> Interactive Event Schedule & Time Picker
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full">
+                      User-Friendly Controls
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1">Event Time</label>
-                    <input
-                      type="text"
-                      value={cmsContent.eventTime || ''}
-                      onChange={(e) => setCmsContent({ ...cmsContent, eventTime: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Event Start & End Date Pickers */}
+                    <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                      <label className="block text-[11px] font-black text-black uppercase tracking-wider">
+                        📅 Select Event Start & End Dates
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-600 block mb-1">Start Date</span>
+                          <input
+                            type="date"
+                            value={pickerStartDate}
+                            onChange={(e) => {
+                              const newStart = e.target.value;
+                              setPickerStartDate(newStart);
+                              const formatted = formatEventDateRange(newStart, pickerEndDate);
+                              setCmsContent({ ...cmsContent, eventDate: formatted });
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-bold text-black focus:border-[#E43D12] bg-white cursor-pointer"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-600 block mb-1">End Date</span>
+                          <input
+                            type="date"
+                            value={pickerEndDate}
+                            onChange={(e) => {
+                              const newEnd = e.target.value;
+                              setPickerEndDate(newEnd);
+                              const formatted = formatEventDateRange(pickerStartDate, newEnd);
+                              setCmsContent({ ...cmsContent, eventDate: formatted });
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-bold text-black focus:border-[#E43D12] bg-white cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-1">Custom Display Override (Event Dates)</label>
+                        <input
+                          type="text"
+                          value={cmsContent.eventDate || ''}
+                          onChange={(e) => setCmsContent({ ...cmsContent, eventDate: e.target.value })}
+                          placeholder="e.g. OCTOBER 24-25, 2026"
+                          className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-extrabold text-black focus:border-[#E43D12] bg-white"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Event Start Time Picker & Suffix */}
+                    <div className="space-y-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                      <label className="block text-[11px] font-black text-black uppercase tracking-wider">
+                        ⏰ Select Event Start Time
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-600 block mb-1">Start Time</span>
+                          <input
+                            type="time"
+                            value={pickerTime}
+                            onChange={(e) => {
+                              const newTime = e.target.value;
+                              setPickerTime(newTime);
+                              const formatted = formatEventTime(newTime, pickerTimeSuffix);
+                              setCmsContent({ ...cmsContent, eventTime: formatted });
+                            }}
+                            className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-bold text-black focus:border-[#E43D12] bg-white cursor-pointer"
+                          />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-600 block mb-1">Time Label / Suffix</span>
+                          <input
+                            type="text"
+                            value={pickerTimeSuffix}
+                            onChange={(e) => {
+                              const newSuffix = e.target.value;
+                              setPickerTimeSuffix(newSuffix);
+                              const formatted = formatEventTime(pickerTime, newSuffix);
+                              setCmsContent({ ...cmsContent, eventTime: formatted });
+                            }}
+                            placeholder="IST (24 Hours Live Code)"
+                            className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-bold text-black focus:border-[#E43D12] bg-white"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 mb-1">Custom Display Override (Event Time)</label>
+                        <input
+                          type="text"
+                          value={cmsContent.eventTime || ''}
+                          onChange={(e) => setCmsContent({ ...cmsContent, eventTime: e.target.value })}
+                          placeholder="e.g. 08:30 AM IST (24 Hours Live Code)"
+                          className="w-full px-3 py-2 rounded-lg border-2 border-slate-300 text-xs font-extrabold text-black focus:border-[#E43D12] bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Website Display Preview Card */}
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 flex flex-col sm:flex-row items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+                      <span className="font-extrabold text-amber-950">Live Landing Page Preview:</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-amber-300 font-mono font-black text-[#E43D12]">
+                        📅 {cmsContent.eventDate || 'OCTOBER 24-25, 2026'}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-md bg-white border border-amber-300 font-mono font-black text-[#E43D12]">
+                        ⏰ {cmsContent.eventTime || '08:30 AM IST'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -1507,6 +1663,67 @@ export default function AdminDashboard() {
                     onChange={(e) => setCmsContent({ ...cmsContent, venue: e.target.value })}
                     className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-extrabold focus:border-[#E43D12]"
                   />
+                </div>
+              </div>
+            )}
+
+            {/* SUB-TAB 2: PRIZE POOL & REWARDS */}
+            {cmsSubTab === 'prizes' && (
+              <div className="space-y-4 animate-in fade-in-50 duration-150">
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold">
+                  💡 <strong>Note:</strong> Updates made here directly change the cash prize numbers displayed in the Prize Pool section and Hero banner on the public Landing Page.
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">Grand Total Prize Pool Amount</label>
+                    <input
+                      type="text"
+                      placeholder="₹1,50,000+"
+                      value={cmsContent.totalPrizePool || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, totalPrizePool: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-black focus:border-[#E43D12]"
+                    />
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">Shows in Hero banner & Prize section header.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">1st Prize Amount (Grand Champion)</label>
+                    <input
+                      type="text"
+                      placeholder="₹75,000"
+                      value={cmsContent.firstPrize || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, firstPrize: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-black text-[#E43D12] focus:border-[#E43D12]"
+                    />
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">Shows on 1st Prize card.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">2nd Prize Amount (Runner Up)</label>
+                    <input
+                      type="text"
+                      placeholder="₹40,000"
+                      value={cmsContent.secondPrize || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, secondPrize: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-black focus:border-[#E43D12]"
+                    />
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">Shows on 2nd Prize card.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-black mb-1">3rd Prize Amount (Second Runner Up)</label>
+                    <input
+                      type="text"
+                      placeholder="₹25,000"
+                      value={cmsContent.thirdPrize || ''}
+                      onChange={(e) => setCmsContent({ ...cmsContent, thirdPrize: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-300 bg-white text-black text-xs font-black focus:border-[#E43D12]"
+                    />
+                    <p className="text-[10px] text-slate-500 font-bold mt-1">Shows on 3rd Prize card.</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -1660,14 +1877,37 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            <div className="border-t pt-4 border-slate-200">
+            <div className="border-t pt-4 border-slate-200 flex items-center gap-4 flex-wrap">
               <button
                 type="submit"
                 disabled={savingCms}
-                className="px-6 py-3 rounded-xl btn-3d-primary text-white font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer"
+                className={`px-6 py-3 rounded-xl font-extrabold text-xs shadow-md flex items-center gap-2 cursor-pointer transition-all ${
+                  cmsSuccessSaved
+                    ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+                    : 'btn-3d-primary text-white'
+                }`}
               >
-                <Save className="w-4 h-4 text-white" /> Save All CMS Changes
+                {savingCms ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 text-white animate-spin" /> Saving Changes...
+                  </>
+                ) : cmsSuccessSaved ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 text-white" /> Saved All CMS Changes! ✓
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 text-white" /> Save All CMS Changes
+                  </>
+                )}
               </button>
+
+              {cmsSuccessSaved && (
+                <div className="px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-black flex items-center gap-2 animate-in fade-in duration-200 shadow-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Landing Page CMS settings updated & published live!</span>
+                </div>
+              )}
             </div>
           </form>
         )}

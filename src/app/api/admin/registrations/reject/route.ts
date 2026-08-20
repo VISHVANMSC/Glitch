@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: `Team "${updatedTeam.teamName}" rejected. Rejection reason dispatched to leader.`,
+      message: `Team "${updatedTeam.teamName}" rejected. Rejection notice email sent to ${updatedTeam.leader?.email || 'leader'}. (If not found in inbox, ask participant to check Spam/Junk folder).`,
       team: updatedTeam,
     });
   } catch (error: any) {

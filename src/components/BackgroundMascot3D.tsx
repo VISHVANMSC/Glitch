@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
-import { Bot, Sparkles } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 export default function BackgroundMascot3D() {
   const [mounted, setMounted] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentMessage, setCurrentMessage] = useState('Welcome to GLITCH 1.0! 🚀');
+  const [currentMessage, setCurrentMessage] = useState('Welcome to GLITCH 1.0!');
 
   useEffect(() => {
     setMounted(true);
@@ -58,7 +58,7 @@ export default function BackgroundMascot3D() {
   useEffect(() => {
     const unsubscribe = scrollYProgress.on('change', (latest) => {
       if (latest < 0.2) {
-        setCurrentMessage('Welcome to GLITCH 1.0! Ready to innovate? 🚀');
+        setCurrentMessage('Welcome to GLITCH 1.0! Ready to innovate?');
       } else if (latest < 0.4) {
         setCurrentMessage('24 Hours of Live Sprint & Mentorship! ⚡');
       } else if (latest < 0.6) {
@@ -108,7 +108,6 @@ export default function BackgroundMascot3D() {
           <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 sm:w-56 p-2 sm:p-2.5 rounded-2xl bg-white/95 backdrop-blur-md border border-[#E43D12]/40 shadow-xl text-center space-y-0.5 pointer-events-none">
             <div className="flex items-center justify-center gap-1 text-[10px] sm:text-xs font-black text-[#E43D12] uppercase tracking-wider">
               <Bot className="w-3.5 h-3.5 text-[#E43D12]" /> Glitchy
-              <Sparkles className="w-3 h-3 text-[#EFB11D]" />
             </div>
             <p className="text-[10px] sm:text-xs text-slate-800 font-bold leading-tight">
               "{currentMessage}"

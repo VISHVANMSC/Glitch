@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: 'Registration submitted successfully. Pending admin approval.',
+      message: 'Registration submitted successfully! We’ve sent a confirmation email to your registered address. If you don’t see it in your inbox, please check your Spam/Junk folder.',
       team,
     });
   } catch (error: any) {

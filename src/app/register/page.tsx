@@ -5,7 +5,16 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CollegeCombobox from '@/components/CollegeCombobox';
+import RegistrationSuccessModal from '@/components/RegistrationSuccessModal';
 import { uploadPaymentScreenshot } from '@/lib/supabase';
+import {
+  validateTeamName,
+  validateName,
+  validateEmail,
+  validatePhone,
+  validateDepartment,
+  validateUtr,
+} from '@/lib/validation';
 import {
   Users,
   Building2,
@@ -14,7 +23,6 @@ import {
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
   ShieldAlert,
   QrCode,
   FileCheck,
@@ -91,6 +99,8 @@ export default function RegisterPage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submittedTeamInfo, setSubmittedTeamInfo] = useState<{ teamName: string; utr: string } | null>(null);
 
   // Form State
   const [teamName, setTeamName] = useState('');
@@ -193,8 +203,9 @@ export default function RegisterPage() {
 
   // Validation routines per step
   const validateStep1 = () => {
-    if (!teamName.trim()) {
-      setError('Please enter a valid Team Name.');
+    const teamErr = validateTeamName(teamName);
+    if (teamErr) {
+      setError(teamErr);
       return false;
     }
     setError('');
@@ -207,8 +218,9 @@ export default function RegisterPage() {
       setError('Please select your College / Institution.');
       return false;
     }
-    if (!leader.department || !leader.department.trim()) {
-      setError('Please enter your Leader Department.');
+    const deptErr = validateDepartment(leader.department);
+    if (deptErr) {
+      setError(`Leader Department Error: ${deptErr}`);
       return false;
     }
     setError('');
@@ -219,21 +231,37 @@ export default function RegisterPage() {
     const activeMembers = members.slice(0, teamSize);
     for (let i = 0; i < teamSize; i++) {
       const m = activeMembers[i];
-      if (!m.name.trim() || !m.email.trim() || !m.phone.trim() || !m.department.trim()) {
-        setError(`Please fill in all mandatory fields for Member ${i + 1}.`);
+      const nameErr = validateName(m.name);
+      if (nameErr) {
+        setError(`Member ${i + 1}: ${nameErr}`);
+        return false;
+      }
+      const emailErr = validateEmail(m.email);
+      if (emailErr) {
+        setError(`Member ${i + 1}: ${emailErr}`);
+        return false;
+      }
+      const phoneErr = validatePhone(m.phone);
+      if (phoneErr) {
+        setError(`Member ${i + 1}: ${phoneErr}`);
+        return false;
+      }
+      const deptErr = validateDepartment(m.department);
+      if (deptErr) {
+        setError(`Member ${i + 1}: ${deptErr}`);
         return false;
       }
     }
 
     const emails = activeMembers.map((m) => m.email.trim().toLowerCase());
     if (new Set(emails).size !== emails.length) {
-      setError('Each person in the team must have a unique email address.');
+      setError('Each member in the team must have a unique email address.');
       return false;
     }
 
-    const phones = activeMembers.map((m) => m.phone.trim());
+    const phones = activeMembers.map((m) => m.phone.trim().replace(/[\s\-\(\)]/g, ''));
     if (new Set(phones).size !== phones.length) {
-      setError('Each person in the team must have a unique phone number.');
+      setError('Each member in the team must have a unique phone number.');
       return false;
     }
 
@@ -251,8 +279,9 @@ export default function RegisterPage() {
       setError('Screenshot file size must be less than 1MB.');
       return;
     }
-    if (!transactionUtor.trim() || transactionUtor.trim().length < 6) {
-      setError('Please enter a valid 12-digit Transaction Ref / UTR Number.');
+    const utrErr = validateUtr(transactionUtor);
+    if (utrErr) {
+      setError(utrErr);
       return;
     }
 
@@ -283,8 +312,11 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Failed to submit registration');
       }
 
-      // Redirect to team leader dashboard
-      router.push('/dashboard');
+      setSubmittedTeamInfo({
+        teamName: payload.teamName,
+        utr: payload.transactionUtor,
+      });
+      setShowSuccessModal(true);
     } catch (err: any) {
       setError(err.message || 'Server error during registration submission.');
     } finally {
@@ -311,7 +343,7 @@ export default function RegisterPage() {
         {/* Step Indicator Header */}
         <div className="mb-8 text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest">
-            <Sparkles className="w-3.5 h-3.5 text-[#E43D12]" /> Mandatory Team Registration
+            Mandatory Team Registration
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-slate-900">Register Team for GLITCH - 1.0</h1>
           <p className="text-xs text-slate-600 font-medium max-w-md mx-auto">
@@ -801,6 +833,20 @@ export default function RegisterPage() {
       </main>
 
       <Footer />
+
+      <RegistrationSuccessModal
+        isOpen={showSuccessModal}
+        title="Team Registration Submitted!"
+        subtitle={`Your team "${submittedTeamInfo?.teamName || teamName}" has been registered successfully for GLITCH 1.0! Your application & payment proof are under admin verification.`}
+        badgeText="Application Submitted"
+        details={[
+          { label: 'Team Name', value: submittedTeamInfo?.teamName || teamName },
+          { label: 'Transaction Ref', value: submittedTeamInfo?.utr || transactionUtor },
+          { label: 'Verification Status', value: 'Pending Admin Review' },
+        ]}
+        primaryButtonText="Go to Leader Dashboard"
+        onPrimaryClick={() => router.push('/dashboard')}
+      />
     </div>
   );
 }

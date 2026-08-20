@@ -1,24 +1,38 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, LogIn, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, LogIn, ShieldCheck, AlertCircle, Clock } from 'lucide-react';
+import { validateEmail } from '@/lib/validation';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isAdminParam = searchParams.get('admin') === 'true';
+  const isInactivityLogout = searchParams.get('reason') === 'inactivity';
 
   const [formData, setFormData] = useState({
     email: isAdminParam ? 'admin@glitch.com' : '',
     password: '',
   });
+  const [touched, setTouched] = useState({ email: false, password: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const emailError = useMemo(() => validateEmail(formData.email), [formData.email]);
+  const passwordError = useMemo(() => (!formData.password ? 'Password is required.' : null), [formData.password]);
+  const isFormValid = !emailError && !passwordError;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setTouched({ email: true, password: true });
+
+    if (!isFormValid) {
+      setError('Please enter a valid email and password.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
@@ -26,7 +40,10 @@ function LoginForm() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password,
+        }),
       });
 
       const data = await res.json();
@@ -73,13 +90,21 @@ function LoginForm() {
         </p>
       </div>
 
-      {error && (
-        <div className="p-3.5 rounded-xl bg-red-50 border-2 border-red-200 text-xs font-black text-red-700">
-          ⚠️ {error}
+      {isInactivityLogout && (
+        <div className="p-3.5 rounded-xl bg-amber-50 border-2 border-amber-300 text-xs font-black text-amber-900 flex items-center gap-2 animate-in fade-in duration-200">
+          <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+          <span>You were automatically logged out due to 3 minutes of inactivity. Please log in again to continue.</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="p-3.5 rounded-xl bg-red-50 border-2 border-red-200 text-xs font-black text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         <div>
           <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
             Email Address *
@@ -89,12 +114,23 @@ function LoginForm() {
             <input
               type="email"
               required
-              placeholder="mail"
+              placeholder="mail@college.edu"
               value={formData.email}
+              onBlur={() => setTouched({ ...touched, email: true })}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-[#E43D12] text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm"
+              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${
+                touched.email && emailError
+                  ? 'border-red-500 bg-red-50/20'
+                  : 'border-slate-300 focus:border-[#E43D12]'
+              }`}
             />
           </div>
+          {touched.email && emailError && (
+            <p className="text-[11px] font-bold text-red-600 flex items-center gap-1 mt-1">
+              <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              {emailError}
+            </p>
+          )}
         </div>
 
         <div>
@@ -113,16 +149,27 @@ function LoginForm() {
               required
               placeholder="••••••••"
               value={formData.password}
+              onBlur={() => setTouched({ ...touched, password: true })}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full pl-10 pr-4 py-3 rounded-xl border-2 border-slate-300 focus:border-[#E43D12] text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm"
+              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${
+                touched.password && passwordError
+                  ? 'border-red-500 bg-red-50/20'
+                  : 'border-slate-300 focus:border-[#E43D12]'
+              }`}
             />
           </div>
+          {touched.password && passwordError && (
+            <p className="text-[11px] font-bold text-red-600 flex items-center gap-1 mt-1">
+              <AlertCircle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              {passwordError}
+            </p>
+          )}
         </div>
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full py-3.5 rounded-xl btn-3d-primary font-black text-sm text-white shadow-lg flex items-center justify-center gap-2"
+          disabled={loading || (touched.email && !isFormValid)}
+          className="w-full py-3.5 rounded-xl btn-3d-primary font-black text-sm text-white shadow-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {loading ? (
             <span className="font-black">Authenticating...</span>

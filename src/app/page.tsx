@@ -5,12 +5,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { dataService } from '@/lib/dataService';
 import {
-  Sparkles,
   Calendar,
   Clock,
   MapPin,
   Trophy,
   Award,
+  Crown,
+  Medal,
   Zap,
   Users,
   Code,
@@ -25,6 +26,7 @@ import {
   Layers,
   Flame,
   Bot,
+  Target,
 } from 'lucide-react';
 
 import { redirect } from 'next/navigation';
@@ -76,8 +78,7 @@ export default async function LandingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center text-center lg:text-left pt-2">
             <div className="lg:col-span-8 space-y-6 text-center lg:text-left">
               <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.08] drop-shadow-sm text-slate-900">
-                <span>BUILD THE FUTURE AT </span>
-                <span className="gradient-text-flame">{cms.heroHeadline || 'GLITCH - 1.0'}</span>
+                <span className="gradient-text-flame">{cms.heroHeadline || 'GLITCH 1.0'}</span>
               </h1>
 
               <p className="text-base sm:text-xl text-slate-600 font-semibold leading-relaxed max-w-2xl">
@@ -154,11 +155,8 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          {/* Prominent Countdown Section */}
-          <div className="pt-8 border-t border-slate-200 max-w-2xl mx-auto">
-            <p className="text-xs font-black uppercase tracking-widest text-[#E43D12] mb-4 flex items-center justify-center gap-2">
-              <Clock className="w-4 h-4 text-[#E43D12]" /> EVENT STARTS IN
-            </p>
+          {/* Prominent Futuristic Countdown Section */}
+          <div className="pt-12 border-t border-slate-200 max-w-4xl mx-auto flex flex-col items-center justify-center text-center">
             <CountdownTimer targetDate="2026-10-24T08:30:00" />
           </div>
         </div>
@@ -202,69 +200,133 @@ export default async function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-24 relative z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest">
-                <Sparkles className="w-3.5 h-3.5" /> About GLITCH - 1.0
-              </div>
-              <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-                Where Engineering Mastery Meets Real-World Impact
-              </h2>
-              <p className="text-slate-700 text-base leading-relaxed font-medium">
-                <strong className="text-[#E43D12]">GLITCH - 1.0</strong> is a premier 24hrs National Level Hackathon designed to unite student creators, software architects, AI enthusiasts, and system engineers under one roof. Over 24 intense hours, teams will build prototype solutions to real-world industry challenges.
+      <section id="about" className="py-24 relative z-10 bg-gradient-to-b from-transparent via-slate-50/60 to-transparent">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest">
+              About GLITCH 1.0
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+              Where Students Build Like Industry Professionals
+            </h2>
+            <div className="max-w-3xl mx-auto space-y-4 pt-2">
+              <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-medium">
+                <strong className="text-[#E43D12]">GLITCH 1.0</strong> is a student-focused hackathon designed to discover and strengthen the real-world product creation skills of students.
               </p>
-              <p className="text-slate-600 text-base leading-relaxed font-medium">
-                Whether you are crafting decentralized protocols, intelligent autonomous agents, or high-concurrency web platforms, GLITCH - 1.0 provides the environment, mentorship, and platform to showcase your technical brilliance to a national audience.
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-medium">
+                Unlike traditional academic projects, GLITCH 1.0 gives participants an opportunity to work on industry-oriented problem statements and transform them into functional, user-focused applications.
               </p>
+            </div>
+          </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <div className="p-6 rounded-2xl card-3d bg-white border-slate-200">
-                  <div className="text-3xl font-black gradient-text-gold">{cms.totalPrizePool || '₹1,50,000+'}</div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Grand Prize Pool</div>
-                </div>
-                <div className="p-6 rounded-2xl card-3d bg-white border-slate-200">
-                  <div className="text-3xl font-black text-[#E43D12]">24 Hours</div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Non-stop Hack</div>
-                </div>
+          {/* Card 1: What is GLITCH 1.0? */}
+          <div className="card-3d p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-4">
+            <div className="inline-flex items-center gap-2 text-[#E43D12] font-black text-xs uppercase tracking-widest">
+              Core Mission
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900">What is GLITCH 1.0?</h3>
+            <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-medium">
+              At GLITCH 1.0, we provide the problem statements — the challenge is for participants to turn those challenges into meaningful and practical products.
+            </p>
+            <p className="text-slate-600 text-base leading-relaxed font-medium">
+              From understanding the requirements to designing the user experience, developing the application, testing it, and presenting the final solution, participants get to experience the complete product development journey.
+            </p>
+          </div>
+
+          {/* Card 2: More Than Just Coding */}
+          <div className="card-3d p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-6">
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 text-[#E43D12] font-black text-xs uppercase tracking-widest">
+                <Code className="w-4 h-4" /> Holistic Product Engineering
               </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-slate-900">More Than Just Coding</h3>
+              <p className="text-slate-700 text-base leading-relaxed font-medium">
+                Building a real-world application requires more than writing code.
+              </p>
+              <p className="text-slate-900 text-sm font-black uppercase tracking-wider pt-2">
+                GLITCH 1.0 helps participants explore how to:
+              </p>
             </div>
 
-            {/* 3D Tech Asset & Mascot Feature */}
-            <div className="space-y-6">
-              <div className="relative w-full h-64 rounded-3xl overflow-hidden card-3d bg-white shadow-xl border border-slate-200">
-                <Image
-                  src="/images/tech_3d.png"
-                  alt="3D Tech Neural Node"
-                  fill
-                  className="object-cover hover:scale-105 transition-transform duration-700"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {[
+                'Understand and analyze a given problem statement.',
+                'Convert requirements into a practical product solution.',
+                'Design intuitive and user-friendly interfaces.',
+                'Choose the right technologies and architecture.',
+                'Build functional and reliable applications.',
+                'Think about scalability, usability, and real-world constraints.',
+                'Present their product and explain their technical decisions.',
+              ].map((item, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-[#E43D12]/10 text-[#E43D12] flex items-center justify-center shrink-0 mt-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#E43D12]" />
+                  </div>
+                  <span className="text-xs sm:text-sm font-bold text-slate-800 leading-snug">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Card 3: Discovering Real Product-Building Skills */}
+          <div className="card-3d p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-xl space-y-4">
+            <div className="inline-flex items-center gap-2 text-[#E43D12] font-black text-xs uppercase tracking-widest">
+              <Target className="w-4 h-4" /> Discovering Talent
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-black text-slate-900">Discovering Real Product-Building Skills</h3>
+            <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-medium">
+              The goal of GLITCH 1.0 is not simply to find participants who can code.
+            </p>
+            <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-medium">
+              It is about discovering who can take a given challenge and turn it into a complete, meaningful, and usable product.
+            </p>
+            <p className="text-slate-600 text-base leading-relaxed font-medium">
+              We want to understand how students approach problems, make technical decisions, collaborate, build, test, and deliver — just like they would in a real industry environment.
+            </p>
+          </div>
+
+          {/* Card 4: Experience the Industry. Build the Future. */}
+          <div className="card-3d p-8 sm:p-12 rounded-3xl bg-white border-2 border-[#E43D12] text-slate-900 shadow-xl space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-tr from-[#E43D12]/10 via-[#EFB11D]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="relative z-10 space-y-5">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest shadow-xs">
+                Industry Experience
+              </div>
+              
+              <h3 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                Experience the Industry. Build the Future.
+              </h3>
+              
+              <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-semibold">
+                GLITCH 1.0 gives students a glimpse into what real-world software development looks like beyond classrooms and academic projects.
+              </p>
+              
+              <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-semibold">
+                Participants get the opportunity to build under constraints, make decisions, solve challenges, and deliver a working product.
+              </p>
+
+              {/* Highlight Question Box */}
+              <div className="my-8 p-6 sm:p-8 rounded-2xl bg-slate-50 border-2 border-[#E43D12]/40 shadow-md space-y-4 text-center">
+                <p className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Because the real question isn't:</p>
+                <p className="text-2xl sm:text-3xl font-black text-slate-500 italic">“Can you code?”</p>
+                <p className="text-xs font-black uppercase tracking-widest text-[#E43D12] pt-2">It's:</p>
+                <p className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
+                  “Can you build something that solves a real problem?”
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-6 rounded-2xl card-3d bg-white border-slate-200 space-y-2">
-                  <div className="w-10 h-10 rounded-xl gradient-bg-flame text-white flex items-center justify-center shadow-md">
-                    <Code className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-extrabold text-slate-900 text-base">Curated Problem Statements</h3>
-                  <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Real industrial problem statements revealed via live selection window for fair competition.
-                  </p>
-                </div>
-
-                <div className="p-6 rounded-2xl card-3d bg-white border-slate-200 space-y-2">
-                  <div className="w-10 h-10 rounded-xl gradient-bg-gold text-slate-950 flex items-center justify-center shadow-md">
-                    <Zap className="w-5 h-5 font-black" />
-                  </div>
-                  <h3 className="font-extrabold text-slate-900 text-base">24-Hour Live Sprint</h3>
-                  <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Non-stop hackathon experience with high-speed internet, power backup, and round-the-clock mentorship.
-                  </p>
-                </div>
+              <div className="pt-6 border-t border-slate-200 text-center space-y-2">
+                <h4 className="text-3xl sm:text-4xl font-black text-[#E43D12] tracking-wider uppercase">Build. Solve. Innovate.</h4>
+                <p className="text-xs sm:text-sm font-extrabold text-slate-700 tracking-wide uppercase">
+                  GLITCH 1.0 — A platform to discover the next generation of real-world product builders.
+                </p>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -272,7 +334,7 @@ export default async function LandingPage() {
       <section id="prizes" className="py-24 border-y border-slate-200/80 bg-white/40 backdrop-blur-sm relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#EFB11D]/15 text-[#b45309] border border-[#EFB11D]/40 text-xs font-black uppercase tracking-widest mb-4">
-            <Trophy className="w-3.5 h-3.5" /> Prize Pool & Awards
+            <Trophy className="w-3.5 h-3.5 text-[#b45309]" /> Prize Pool & Awards
           </div>
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight">
             Compete for Grand Cash Prizes & Accolades
@@ -282,53 +344,92 @@ export default async function LandingPage() {
           </p>
 
           <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-5xl mx-auto">
-            {/* 2nd Prize */}
-            <div className="order-2 md:order-1 card-3d p-8 rounded-3xl flex flex-col justify-between bg-white border-slate-200 hover:border-[#D6536D]">
-              <div>
-                <div className="w-16 h-16 mx-auto rounded-2xl bg-[#D6536D]/15 text-[#D6536D] flex items-center justify-center mb-4 shadow-md border border-[#D6536D]/30">
-                  <Award className="w-8 h-8" />
+            
+            {/* 2nd Prize Card */}
+            <div className="order-2 md:order-1 card-3d p-8 rounded-3xl flex flex-col justify-between bg-white border-2 border-slate-200 hover:border-[#D6536D] transition-all shadow-xl hover:-translate-y-1">
+              <div className="space-y-4 text-center">
+                {/* Rank 2 Icon Badge */}
+                <div className="relative w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-slate-100 via-slate-200 to-slate-300 border-2 border-slate-300/80 shadow-md flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <Medal className="w-7 h-7 text-slate-600 mb-0.5" />
+                    <span className="text-2xl font-black text-slate-800 font-mono leading-none">2</span>
+                  </div>
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-[#D6536D]">Runner Up</span>
-                <h3 className="text-2xl font-black text-slate-900 mt-1">2nd Prize</h3>
-                <div className="text-3xl font-black text-[#D6536D] my-4">{cms.secondPrize || '₹40,000'}</div>
-                <p className="text-xs text-slate-600 font-medium">
+
+                <span className="inline-block px-3 py-1 rounded-full bg-[#D6536D]/10 text-[#D6536D] border border-[#D6536D]/30 text-[10px] font-black uppercase tracking-widest">
+                  Runner Up
+                </span>
+                
+                <h3 className="text-2xl font-black text-slate-900">2nd Prize</h3>
+                
+                <div className="text-4xl font-black text-[#D6536D] font-mono tracking-tight my-2">
+                  {cms.secondPrize || '₹40,000'}
+                </div>
+                
+                <p className="text-xs text-slate-600 font-bold leading-relaxed pt-2 border-t border-slate-100">
                   Silver Trophy + Certificates of Excellence + Winner Badges
                 </p>
               </div>
             </div>
 
-            {/* 1st Prize */}
-            <div className="order-1 md:order-2 card-3d p-8 rounded-3xl border-2 border-[#EFB11D] shadow-2xl shadow-[#EFB11D]/20 relative bg-white flex flex-col justify-between">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 gradient-bg-gold text-slate-950 font-black text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full shadow-md">
-                ★ Grand Champion ★
+            {/* 1st Prize Card - Grand Champion (Featured Elevation) */}
+            <div className="order-1 md:order-2 card-3d p-8 sm:p-10 rounded-3xl border-2 border-[#EFB11D] shadow-2xl shadow-[#EFB11D]/25 relative bg-gradient-to-b from-amber-50/70 via-white to-white flex flex-col justify-between transform md:scale-105 md:-translate-y-2 z-10">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#EFB11D] via-[#f59e0b] to-[#E43D12] text-white font-black text-[11px] uppercase tracking-widest px-5 py-1.5 rounded-full shadow-lg border border-amber-300/40">
+                ★ GRAND CHAMPION ★
               </div>
-              <div>
-                <div className="relative w-24 h-24 mx-auto mb-4 animate-float-3d">
-                  <Image src="/images/prize_3d.png" alt="3D Trophy" fill className="object-contain" />
+
+              <div className="space-y-4 text-center pt-3">
+                {/* Rank 1 Icon Badge */}
+                <div className="relative w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-[#EFB11D] via-[#f59e0b] to-[#E43D12] p-1 shadow-xl shadow-[#EFB11D]/30">
+                  <div className="w-full h-full bg-white rounded-[22px] flex flex-col items-center justify-center">
+                    <Crown className="w-8 h-8 text-[#d97706] mb-0.5" />
+                    <span className="text-3xl font-black text-[#d97706] font-mono leading-none">1</span>
+                  </div>
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-[#b45309]">Overall Winner</span>
-                <h3 className="text-3xl font-black text-slate-900 mt-1">1st Prize</h3>
-                <div className="text-4xl font-black gradient-text-gold my-4">{cms.firstPrize || '₹75,000'}</div>
-                <p className="text-xs text-slate-700 font-bold">
+
+                <span className="inline-block px-3.5 py-1.5 rounded-full bg-[#EFB11D]/15 text-[#b45309] border border-[#EFB11D]/40 text-xs font-black uppercase tracking-widest">
+                  Overall Winner
+                </span>
+
+                <h3 className="text-3xl font-black text-slate-900">1st Prize</h3>
+
+                <div className="text-5xl font-black text-[#d97706] font-mono tracking-tight my-2">
+                  {cms.firstPrize || '₹75,000'}
+                </div>
+
+                <p className="text-xs sm:text-sm text-slate-700 font-extrabold leading-relaxed pt-2 border-t border-amber-200/80">
                   Grand Champion Trophy + Gold Medals + National Winner Certificate
                 </p>
               </div>
             </div>
 
-            {/* 3rd Prize */}
-            <div className="order-3 card-3d p-8 rounded-3xl flex flex-col justify-between bg-white border-slate-200 hover:border-[#E43D12]">
-              <div>
-                <div className="w-16 h-16 mx-auto rounded-2xl bg-[#E43D12]/10 text-[#E43D12] flex items-center justify-center mb-4 shadow-md border border-[#E43D12]/30">
-                  <Award className="w-8 h-8" />
+            {/* 3rd Prize Card */}
+            <div className="order-3 card-3d p-8 rounded-3xl flex flex-col justify-between bg-white border-2 border-slate-200 hover:border-[#E43D12] transition-all shadow-xl hover:-translate-y-1">
+              <div className="space-y-4 text-center">
+                {/* Rank 3 Icon Badge */}
+                <div className="relative w-20 h-20 mx-auto rounded-3xl bg-gradient-to-tr from-amber-100 via-amber-200 to-amber-300 border-2 border-amber-300/80 shadow-md flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center">
+                    <Award className="w-7 h-7 text-amber-800 mb-0.5" />
+                    <span className="text-2xl font-black text-amber-900 font-mono leading-none">3</span>
+                  </div>
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Second Runner Up</span>
-                <h3 className="text-2xl font-black text-slate-900 mt-1">3rd Prize</h3>
-                <div className="text-3xl font-black text-[#E43D12] my-4">{cms.thirdPrize || '₹25,000'}</div>
-                <p className="text-xs text-slate-600 font-medium">
+
+                <span className="inline-block px-3 py-1 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-[10px] font-black uppercase tracking-widest">
+                  Second Runner Up
+                </span>
+
+                <h3 className="text-2xl font-black text-slate-900">3rd Prize</h3>
+
+                <div className="text-4xl font-black text-[#E43D12] font-mono tracking-tight my-2">
+                  {cms.thirdPrize || '₹25,000'}
+                </div>
+
+                <p className="text-xs text-slate-600 font-bold leading-relaxed pt-2 border-t border-slate-100">
                   Bronze Trophy + Merit Certificates + Recognition Badges
                 </p>
               </div>
             </div>
+
           </div>
         </div>
       </section>

@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: `Email re-sent successfully to ${leaderEmail}`,
+      message: `Email sent successfully to ${leaderEmail}! If not seen in inbox, please advise participant to check Spam/Junk folder.`,
       result,
     });
   } catch (error: any) {

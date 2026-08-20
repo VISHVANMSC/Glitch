@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({
-      message: `Problem Statement ${selectedPs.psNumber} successfully locked for team ${team.teamName}.`,
+      message: `Problem Statement ${selectedPs.psNumber} locked successfully! Email sent to ${user.email}. If you don't see it in your inbox, please check your Spam/Junk folder.`,
       team: updatedTeam,
     });
   } catch (error: any) {

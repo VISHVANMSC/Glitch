@@ -176,7 +176,7 @@ const memoryStore: {
     },
   ],
   cmsContent: {
-    heroHeadline: 'BUILD THE FUTURE AT GLITCH - 1.0',
+    heroHeadline: 'GLITCH 1.0',
     heroSubtitle: 'A 24hrs Premier National Level Hackathon pushing the frontiers of Code, Intelligence, and Innovation.',
     eventDate: 'OCTOBER 24-25, 2026',
     eventTime: '08:30 AM IST (24 Hours Live Code)',
@@ -926,17 +926,19 @@ export const dataService = {
 
   async updateCmsContent(content: Record<string, string>) {
     for (const [key, value] of Object.entries(content)) {
+      const stringVal = String(value ?? '');
+      memoryStore.cmsContent[key] = stringVal;
       try {
         await prisma.landingPageContent.upsert({
           where: { key },
-          create: { key, value },
-          update: { value },
+          create: { key, value: stringVal },
+          update: { value: stringVal },
         });
       } catch {
-        memoryStore.cmsContent[key] = value;
+        // memoryStore fallback updated above
       }
     }
-    return memoryStore.cmsContent;
+    return await this.getCmsContent();
   },
 
   // Event Management

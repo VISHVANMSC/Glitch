@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AutoLogoutListener from '@/components/AutoLogoutListener';
 
 export const metadata: Metadata = {
   title: 'GLITCH - 1.0 | 24hrs National Level Hackathon',
@@ -32,6 +33,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased text-slate-900 font-sans selection:bg-[#E43D12] selection:text-white bg-cyber-grid min-h-screen" suppressHydrationWarning>
+        <AutoLogoutListener />
         {children}
       </body>
     </html>

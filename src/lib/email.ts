@@ -11,7 +11,19 @@ try {
 const gmailUser = process.env.GMAIL_USER || 'glitch.hackathon.official@gmail.com';
 const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
 const resendApiKey = process.env.RESEND_API_KEY || '';
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const getAppUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (envUrl && envUrl.trim().length > 0) {
+    let formatted = envUrl.trim();
+    if (!formatted.startsWith('http://') && !formatted.startsWith('https://')) {
+      formatted = `https://${formatted}`;
+    }
+    return formatted.replace(/\/$/, '');
+  }
+  return 'http://localhost:3000';
+};
+
+const appUrl = getAppUrl();
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
@@ -155,7 +167,7 @@ export async function sendWelcomeSignupEmail({
         </div>
 
         <div style="text-align: center; margin-top: 25px;">
-          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Register Your Team Now</a>
+          <a href="${appUrl}/register" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Register Your Team</a>
         </div>
         ${EMAIL_FOOTER}
       </div>

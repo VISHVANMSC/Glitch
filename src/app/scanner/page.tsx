@@ -15,7 +15,6 @@ import {
   Camera,
   CheckSquare,
   Square,
-  Sparkles,
   Zap,
   Volume2,
   Shield,
@@ -405,7 +404,7 @@ export default function ScannerDashboard() {
               {feedback.type === 'SUCCESS' && <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />}
               {feedback.type === 'ERROR' && <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />}
               {feedback.type === 'WARNING' && <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />}
-              {feedback.type === 'INFO' && <Sparkles className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />}
+              {feedback.type === 'INFO' && <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />}
               <div className="flex-1">
                 <span className="font-bold block text-base mb-0.5">
                   {feedback.type === 'SUCCESS' ? 'SCAN APPROVED' : feedback.type === 'ERROR' ? 'SCAN ERROR' : feedback.type === 'WARNING' ? 'ALREADY SCANNED' : 'TEAM LOADED'}

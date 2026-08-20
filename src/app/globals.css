@@ -233,3 +233,97 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #E43D12;
 }
+
+/* Google Pay Success Popup Animations */
+@keyframes gpayCheckPop {
+  0% {
+    transform: scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.15) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes gpayRipple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes checkStroke {
+  0% {
+    stroke-dashoffset: 50;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-gpay-pop {
+  animation: gpayCheckPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.animate-gpay-ripple {
+  animation: gpayRipple 1.8s ease-out infinite;
+}
+
+.animate-check-stroke {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: checkStroke 0.5s ease-in-out 0.25s forwards;
+}
+
+/* Futuristic Rocket Trajectory Animations */
+@keyframes rocketFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes thrusterFlame {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scaleX(1) scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleX(1.35) scaleY(1.15);
+  }
+}
+
+@keyframes trajectoryPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(228, 61, 18, 0.6), 0 0 30px rgba(239, 177, 29, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(228, 61, 18, 0.9), 0 0 50px rgba(239, 177, 29, 0.7);
+  }
+}
+
+.animate-rocket-float {
+  animation: rocketFloat 3s ease-in-out infinite;
+}
+
+.animate-thruster-flame {
+  animation: thrusterFlame 0.5s ease-in-out infinite;
+}
+
+.animate-trajectory-pulse {
+  animation: trajectoryPulse 2s ease-in-out infinite;
+}
+
+

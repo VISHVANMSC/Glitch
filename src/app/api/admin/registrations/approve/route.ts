@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: `Team "${updatedTeam.teamName}" approved successfully with ID ${updatedTeam.teamId}`,
+      message: `Team "${updatedTeam.teamName}" approved successfully with ID ${updatedTeam.teamId}. Confirmation email sent to ${updatedTeam.leader?.email || 'leader'}. (If not found in inbox, ask participant to check Spam/Junk folder).`,
       team: updatedTeam,
     });
   } catch (error: any) {

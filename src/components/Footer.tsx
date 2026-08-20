@@ -14,16 +14,8 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="space-y-4 md:col-span-1">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md">
-                <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center overflow-hidden">
-                  <img
-                    src="/images/mascot_3d.png"
-                    alt="Glitchy Mascot"
-                    className="w-8 h-8 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
+              <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md">
+                <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
                   <span className="font-black text-[#E43D12] text-lg">G</span>
                 </div>
               </div>
