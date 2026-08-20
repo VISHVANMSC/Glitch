@@ -30,6 +30,7 @@ const createGmailTransporter = (port: number, secure: boolean) =>
     host: 'smtp.gmail.com',
     port,
     secure,
+    family: 4, // Force IPv4 routing for mobile carrier compatibility
     auth: {
       user: gmailUser,
       pass: gmailPass,
@@ -37,10 +38,10 @@ const createGmailTransporter = (port: number, secure: boolean) =>
     tls: {
       rejectUnauthorized: false,
     },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  });
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
+  } as any);
 
 const transporter465 = createGmailTransporter(465, true);
 const transporter587 = createGmailTransporter(587, false);
