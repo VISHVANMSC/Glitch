@@ -25,10 +25,23 @@ export async function POST(req: Request) {
 
     const existingUser = await dataService.findUserByEmail(parsed.email);
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists. Please login instead.' },
-        { status: 400 }
-      );
+      await setAuthCookie({
+        userId: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+        role: existingUser.role,
+      });
+
+      return NextResponse.json({
+        message: 'Welcome back! Logged into your existing account.',
+        user: {
+          id: existingUser.id,
+          name: existingUser.name,
+          email: existingUser.email,
+          phone: existingUser.phone,
+          role: existingUser.role,
+        },
+      });
     }
 
     const passwordHash = await hashPassword(parsed.password);
