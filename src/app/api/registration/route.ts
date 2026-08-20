@@ -94,8 +94,8 @@ export async function POST(req: Request) {
       members: validatedMembers,
     });
 
-    // Send automatic email notification (non-blocking catch)
-    sendRegistrationSubmittedEmail({
+    // Send automatic email notification
+    await sendRegistrationSubmittedEmail({
       leaderEmail: user.email,
       leaderName: user.name,
       teamName: team.teamName,

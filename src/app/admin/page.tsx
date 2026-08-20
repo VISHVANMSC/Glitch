@@ -32,6 +32,7 @@ import {
   CreditCard,
   Calendar,
   ShieldAlert,
+  AlertCircle,
   QrCode,
   Zap,
   Mail,
@@ -90,8 +91,9 @@ export default function AdminDashboard() {
     allowedEvents: ['CHECK_IN', 'BREAKFAST', 'LUNCH', 'REFRESHMENT', 'CHECK_OUT'],
   });
 
-  // Audit Logs State
+  // Audit Logs & Email Logs State
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [emailLogs, setEmailLogs] = useState<any[]>([]);
 
   // CMS Form State
   const [cmsContent, setCmsContent] = useState<Record<string, string>>({});
@@ -224,6 +226,10 @@ export default function AdminDashboard() {
         const auditRes = await fetch('/api/admin/audit-logs');
         const auditData = await auditRes.json();
         setAuditLogs(auditData.auditLogs || []);
+
+        const elogRes = await fetch('/api/admin/emails/logs');
+        const elogData = await elogRes.json();
+        setEmailLogs(elogData.emailLogs || []);
       } catch (err) {
         console.error('Additional scanning data load error', err);
       }
@@ -729,6 +735,7 @@ export default function AdminDashboard() {
             { id: 'results', label: 'Results & Awards', icon: Trophy },
             { id: 'coordinators', label: 'Coordinators Manager', icon: GraduationCap },
             { id: 'cms', label: 'Landing Page CMS', icon: Edit3 },
+            { id: 'email-logs', label: 'Email Delivery Logs', icon: Mail, badge: emailLogs.length > 0 ? `${emailLogs.length} Logs` : null },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -1910,6 +1917,83 @@ export default function AdminDashboard() {
               )}
             </div>
           </form>
+        )}
+
+        {/* TAB 10: EMAIL DELIVERY LOGS */}
+        {activeTab === 'email-logs' && (
+          <div className="bg-white border-2 border-slate-300 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b pb-4 border-slate-200">
+              <div>
+                <h3 className="text-xl font-black text-black flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-[#E43D12]" /> Email Delivery Audit Logs
+                </h3>
+                <p className="text-xs text-black font-extrabold mt-1">
+                  Real-time live audit of all welcome emails, team registrations, admin approvals, and password reset dispatches.
+                </p>
+              </div>
+              <button
+                onClick={fetchAdminData}
+                className="px-4 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs font-black text-black hover:bg-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Refresh Email Logs
+              </button>
+            </div>
+
+            {emailLogs.length === 0 ? (
+              <div className="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-300">
+                <Mail className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                <p className="text-xs font-black text-black">No email delivery logs recorded yet.</p>
+                <p className="text-[11px] text-black font-bold mt-1">
+                  Emails sent during signup, team registration, admin approval, and password reset will appear here in real time.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-xs">
+                <table className="w-full text-left text-xs font-bold border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 text-black uppercase tracking-wider text-[10px]">
+                      <th className="p-3.5 border-b">Recipient Email</th>
+                      <th className="p-3.5 border-b">Email Subject</th>
+                      <th className="p-3.5 border-b">Delivery Status</th>
+                      <th className="p-3.5 border-b">Dispatch Time</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200 text-black">
+                    {emailLogs.map((log: any, idx: number) => (
+                      <tr key={log.id || idx} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-3.5 font-mono text-black font-black">{log.recipient}</td>
+                        <td className="p-3.5 font-extrabold text-black">{log.subject}</td>
+                        <td className="p-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                              log.status?.includes('SENT')
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-red-100 text-red-800 border border-red-300'
+                            }`}
+                          >
+                            {log.status?.includes('SENT') ? (
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <AlertCircle className="w-3 h-3 text-red-600" />
+                            )}
+                            {log.status}
+                          </span>
+                          {log.error && (
+                            <div className="text-[10px] text-red-600 font-bold mt-1 max-w-xs truncate">
+                              {log.error}
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-3.5 text-black font-mono text-[11px] font-bold">
+                          {new Date(log.createdAt).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         )}
 
         {/* REVIEW REGISTRATION MODAL WITH PAYMENT PROOF SCREENSHOT & QR PASS CARD */}

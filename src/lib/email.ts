@@ -103,12 +103,16 @@ async function sendViaResend({ to, subject, html }: { to: string; subject: strin
   return { success: true, messageId: data.id };
 }
 
+import { dataService } from '@/lib/dataService';
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   // Option 1: Try Resend API over HTTPS if RESEND_API_KEY is configured
   if (resendApiKey) {
     try {
       console.log(`[Resend Dispatch] To: ${to} | Subject: ${subject}`);
-      return await sendViaResend({ to, subject, html });
+      const resendRes = await sendViaResend({ to, subject, html });
+      await dataService.createEmailLog({ recipient: to, subject, status: 'SENT' }).catch(() => {});
+      return resendRes;
     } catch (err: any) {
       console.warn(`[Resend Warning] Resend API failed for ${to}: ${err.message}. Falling back to Gmail SMTP...`);
     }
@@ -117,6 +121,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   // Option 2: Fallback to mock mode if password missing or test value
   if (!gmailPass || gmailPass.includes('abcd')) {
     console.log(`[Email Mock Dispatch] To: ${to} | Subject: ${subject}`);
+    await dataService.createEmailLog({ recipient: to, subject, status: 'SENT (MOCK)' }).catch(() => {});
     return { success: true, mock: true };
   }
 
@@ -138,16 +143,20 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
   try {
     const info = await transporter465.sendMail(mailOptions);
     console.log(`[Email Sent Port 465] MessageId: ${info.messageId} to ${to}`);
+    await dataService.createEmailLog({ recipient: to, subject, status: 'SENT' }).catch(() => {});
     return { success: true, messageId: info.messageId };
   } catch (error465: any) {
     console.warn(`[SMTP 465 Failed] ${error465.message}. Retrying via Port 587 STARTTLS...`);
     try {
       const info587 = await transporter587.sendMail(mailOptions);
       console.log(`[Email Sent Port 587] MessageId: ${info587.messageId} to ${to}`);
+      await dataService.createEmailLog({ recipient: to, subject, status: 'SENT' }).catch(() => {});
       return { success: true, messageId: info587.messageId };
     } catch (error587: any) {
-      console.error(`[Email Error] Failed to send via Port 465 and Port 587 to ${to}:`, error587.message || error587);
-      return { success: false, error: error587.message || 'Email delivery failed' };
+      const errorMsg = error587.message || 'Email delivery failed';
+      console.error(`[Email Error] Failed to send via Port 465 and Port 587 to ${to}:`, errorMsg);
+      await dataService.createEmailLog({ recipient: to, subject, status: 'FAILED', error: errorMsg }).catch(() => {});
+      return { success: false, error: errorMsg };
     }
   }
 }

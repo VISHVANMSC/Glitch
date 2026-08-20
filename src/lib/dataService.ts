@@ -13,6 +13,7 @@ const memoryStore: {
   events: any[];
   attendanceRecords: any[];
   auditLogs: any[];
+  emailLogs: any[];
 } = {
   users: [
     {
@@ -240,6 +241,7 @@ Jury Verdict: The decision of the organizing committee and evaluation jury will 
   ],
   attendanceRecords: [],
   auditLogs: [],
+  emailLogs: [],
 };
 
 export const dataService = {
@@ -1255,6 +1257,42 @@ export const dataService = {
       });
     } catch {
       return memoryStore.auditLogs.slice(0, 100);
+    }
+  },
+
+  // Email Logs
+  async createEmailLog(data: { recipient: string; subject: string; status: string; error?: string | null }) {
+    try {
+      return await prisma.emailLog.create({
+        data: {
+          recipient: data.recipient,
+          subject: data.subject,
+          status: data.status,
+          error: data.error || null,
+        },
+      });
+    } catch {
+      const log = {
+        id: `elog-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        recipient: data.recipient,
+        subject: data.subject,
+        status: data.status,
+        error: data.error || null,
+        createdAt: new Date(),
+      };
+      (memoryStore as any).emailLogs.unshift(log);
+      return log;
+    }
+  },
+
+  async getEmailLogs() {
+    try {
+      return await prisma.emailLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+      });
+    } catch {
+      return (memoryStore as any).emailLogs || [];
     }
   },
 };

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
 
     if (updatedTeam.leader?.email) {
-      sendApprovalEmail({
+      await sendApprovalEmail({
         leaderEmail: updatedTeam.leader.email,
         leaderName: updatedTeam.leader.name,
         teamName: updatedTeam.teamName,

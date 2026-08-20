@@ -48,8 +48,8 @@ export async function POST(req: Request) {
       role: user.role,
     });
 
-    // Dispatch welcome email asynchronously
-    sendWelcomeSignupEmail({ email: user.email, name: user.name }).catch((err) => {
+    // Dispatch welcome email
+    await sendWelcomeSignupEmail({ email: user.email, name: user.name }).catch((err) => {
       console.error('Failed to send welcome email:', err);
     });
 
