@@ -1035,41 +1035,65 @@ export const dataService = {
 
   // Scanning & Attendance Logic
   async findTeamByCode(code: string) {
-    const query = code.trim().toUpperCase();
-    // Handle formats like "GLITCH-TEAM:GL-01", "GL-01", "GL2026001", or UUID
-    let targetTeamId = query;
-    if (query.startsWith('GLITCH-TEAM:')) {
-      targetTeamId = query.replace('GLITCH-TEAM:', '').trim();
+    const rawQuery = code.trim();
+    const query = rawQuery.toUpperCase();
+
+    // Strip common prefixes from QR codes or barcodes
+    let cleanId = query;
+    if (query.startsWith('GLITCH-TEAM:')) cleanId = query.replace('GLITCH-TEAM:', '').trim();
+    if (query.startsWith('GLITCH-BARCODE:')) cleanId = query.replace('GLITCH-BARCODE:', '').trim();
+    if (query.startsWith('BARCODE:')) cleanId = query.replace('BARCODE:', '').trim();
+
+    // Map numeric barcodes like GL2026001 -> GL-01
+    let numericTeamId = '';
+    if (cleanId.startsWith('GL2026')) {
+      const num = parseInt(cleanId.replace('GL2026', ''), 10);
+      if (!isNaN(num)) {
+        numericTeamId = `GL-${String(num).padStart(2, '0')}`;
+      }
     }
 
+    const mode = 'insensitive' as const;
     try {
       const team = await prisma.team.findFirst({
         where: {
           OR: [
-            { teamId: targetTeamId },
-            { id: targetTeamId },
-            { qrCodeData: query },
-            { barcodeData: query },
-            { teamName: { equals: query, mode: 'insensitive' } },
+            { teamId: { equals: cleanId, mode } },
+            { teamId: { equals: query, mode } },
+            { id: { equals: cleanId, mode } },
+            { id: { equals: query, mode } },
+            ...(numericTeamId ? [{ teamId: { equals: numericTeamId, mode } }] : []),
+            { qrCodeData: { equals: rawQuery, mode } },
+            { barcodeData: { equals: rawQuery, mode } },
+            { qrCodeData: { equals: query, mode } },
+            { barcodeData: { equals: query, mode } },
+            { teamName: { equals: rawQuery, mode } },
           ],
         },
         include: { members: true, leader: true },
       });
-      return team;
+      if (team) return team;
     } catch {
-      const team = memoryStore.teams.find(
-        (t) =>
-          t.teamId === targetTeamId ||
-          t.id === targetTeamId ||
-          t.qrCodeData === query ||
-          t.barcodeData === query ||
-          t.teamName?.toUpperCase() === query
-      );
-      if (!team) return null;
-      const members = memoryStore.teamMembers.filter((m) => m.teamId === team.id);
-      const leader = memoryStore.users.find((u) => u.id === team.leaderId);
-      return { ...team, members, leader };
+      // Memory store fallback below
     }
+
+    const team = memoryStore.teams.find(
+      (t) =>
+        t.teamId?.toUpperCase() === cleanId ||
+        t.id?.toUpperCase() === cleanId ||
+        t.teamId?.toUpperCase() === query ||
+        t.id?.toUpperCase() === query ||
+        (numericTeamId && t.teamId?.toUpperCase() === numericTeamId) ||
+        t.qrCodeData?.toUpperCase() === query ||
+        t.barcodeData?.toUpperCase() === query ||
+        t.barcodeData?.toUpperCase() === rawQuery.toUpperCase() ||
+        t.teamName?.toUpperCase() === query
+    );
+
+    if (!team) return null;
+    const members = memoryStore.teamMembers.filter((m) => m.teamId === team.id);
+    const leader = memoryStore.users.find((u) => u.id === team.leaderId);
+    return { ...team, members, leader };
   },
 
   async checkDuplicateAttendance(eventId: string, memberIds: string[]) {

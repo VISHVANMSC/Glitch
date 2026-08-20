@@ -23,7 +23,7 @@ import {
   X,
   Bell,
 } from 'lucide-react';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { playSuccessBeep, playErrorBeep } from '@/lib/audio';
 
 export default function ScannerDashboard() {
@@ -92,15 +92,39 @@ export default function ScannerDashboard() {
 
     if (cameraActive && selectedEventId) {
       const elementId = 'phone-qr-reader';
-      const html5QrCode = new Html5Qrcode(elementId);
+      const html5QrCode = new Html5Qrcode(elementId, {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.CODE_93,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.ITF,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODABAR,
+          Html5QrcodeSupportedFormats.DATA_MATRIX,
+        ],
+        verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true,
+        },
+      } as any);
       html5QrCodeRef.current = html5QrCode;
+
+      const dynamicBoxFunction = (viewfinderWidth: number, viewfinderHeight: number) => {
+        const width = Math.floor(Math.min(viewfinderWidth * 0.9, 340));
+        const height = Math.floor(Math.min(viewfinderHeight * 0.6, 200));
+        return { width, height };
+      };
 
       html5QrCode
         .start(
           { facingMode: 'environment' },
           {
-            fps: 10,
-            qrbox: { width: 240, height: 240 },
+            fps: 15,
+            qrbox: dynamicBoxFunction,
           },
           (decodedText) => {
             if (!isMounted) return;

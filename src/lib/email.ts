@@ -25,18 +25,25 @@ const getAppUrl = (): string => {
 
 const appUrl = getAppUrl();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: gmailUser,
-    pass: gmailPass,
-  },
-  connectionTimeout: 8000,
-  greetingTimeout: 8000,
-  socketTimeout: 8000,
-});
+const createGmailTransporter = (port: number, secure: boolean) =>
+  nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port,
+    secure,
+    auth: {
+      user: gmailUser,
+      pass: gmailPass,
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  });
+
+const transporter465 = createGmailTransporter(465, true);
+const transporter587 = createGmailTransporter(587, false);
 
 const EMAIL_HEADER = `
   <div style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;">
@@ -113,35 +120,35 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     return { success: true, mock: true };
   }
 
-  // Option 3: Nodemailer SMTP with timeouts
+  // Option 3: Nodemailer SMTP with automatic Port 465 (SSL) -> Port 587 (STARTTLS) fallback
+  const text = htmlToPlainText(html);
+  const mailOptions = {
+    from: `"GLITCH 1.0 Team" <${gmailUser}>`,
+    replyTo: `"GLITCH 1.0 Support" <${gmailUser}>`,
+    to,
+    subject,
+    text,
+    html,
+    headers: {
+      'X-Mailer': 'GLITCH-Hackathon-Mailer/1.0',
+      'X-Auto-Response-Suppress': 'OOF, AutoReply',
+    },
+  };
+
   try {
-    const text = htmlToPlainText(html);
-    const info = await transporter.sendMail({
-      from: `"GLITCH 1.0 Team" <${gmailUser}>`,
-      replyTo: `"GLITCH 1.0 Support" <${gmailUser}>`,
-      to,
-      subject,
-      text,
-      html,
-      headers: {
-        'X-Mailer': 'GLITCH-Hackathon-Mailer/1.0',
-        'X-Auto-Response-Suppress': 'OOF, AutoReply',
-      },
-    });
-    console.log(`[Email Sent] MessageId: ${info.messageId}`);
+    const info = await transporter465.sendMail(mailOptions);
+    console.log(`[Email Sent Port 465] MessageId: ${info.messageId} to ${to}`);
     return { success: true, messageId: info.messageId };
-  } catch (error: any) {
-    console.error(`[Email Error] Failed to send to ${to}:`, error.message || error);
-    if (
-      error.code === 'ETIMEDOUT' ||
-      error.code === 'ENETUNREACH' ||
-      (error.message && error.message.toLowerCase().includes('timeout'))
-    ) {
-      console.warn(
-        `[SMTP Warning] Network blocked outbound SMTP connections (port 465/587). Set RESEND_API_KEY in .env to use HTTPS API (port 443) for email delivery.`
-      );
+  } catch (error465: any) {
+    console.warn(`[SMTP 465 Failed] ${error465.message}. Retrying via Port 587 STARTTLS...`);
+    try {
+      const info587 = await transporter587.sendMail(mailOptions);
+      console.log(`[Email Sent Port 587] MessageId: ${info587.messageId} to ${to}`);
+      return { success: true, messageId: info587.messageId };
+    } catch (error587: any) {
+      console.error(`[Email Error] Failed to send via Port 465 and Port 587 to ${to}:`, error587.message || error587);
+      return { success: false, error: error587.message || 'Email delivery failed' };
     }
-    return { success: false, error: error.message || 'Email delivery failed' };
   }
 }
 
@@ -299,7 +306,18 @@ export async function sendApprovalEmail({
       </div>
     </div>
   `;
-  return sendEmail({ to: leaderEmail, subject, html });
+
+  // Build unique recipient list for leader and all team members
+  const memberEmails = (members || []).map((m) => m.email?.trim()).filter((e) => e && e.includes('@'));
+  const allRecipients = Array.from(new Set([leaderEmail.trim(), ...memberEmails]));
+
+  // Send to all team recipients
+  const results = await Promise.all(
+    allRecipients.map((recipient) => sendEmail({ to: recipient, subject, html }))
+  );
+
+  const primaryResult = results[0] || { success: true };
+  return primaryResult;
 }
 
 export async function sendRejectionEmail({
