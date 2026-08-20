@@ -104,14 +104,13 @@ async function sendViaResend({ to, subject, html }: { to: string; subject: strin
 }
 
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  // Option 1: Use Resend API over HTTPS (Port 443) if RESEND_API_KEY is configured
+  // Option 1: Try Resend API over HTTPS if RESEND_API_KEY is configured
   if (resendApiKey) {
     try {
       console.log(`[Resend Dispatch] To: ${to} | Subject: ${subject}`);
       return await sendViaResend({ to, subject, html });
     } catch (err: any) {
-      console.error(`[Resend Error] Failed to send via Resend API to ${to}:`, err.message);
-      return { success: false, error: err.message };
+      console.warn(`[Resend Warning] Resend API failed for ${to}: ${err.message}. Falling back to Gmail SMTP...`);
     }
   }
 
