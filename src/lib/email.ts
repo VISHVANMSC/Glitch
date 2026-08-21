@@ -181,10 +181,12 @@ export async function sendWelcomeSignupEmail({
           <p style="margin: 0; font-weight: 600; color: #374151;">Account Info:</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">Registered Email: <strong>${email}</strong></p>
         </div>
-        ${ EMAIL_FOOTER }
-  </div>
+
+        <p style="margin-top: 20px; font-size: 14px; font-weight: 600; color: #4f46e5; text-align: center;">Please visit the GLITCH portal for more details.</p>
+        ${EMAIL_FOOTER}
+      </div>
     </div>
-      `;
+  `;
   return sendEmail({ to: email, subject, html });
 }
 
@@ -211,10 +213,7 @@ export async function sendRegistrationSubmittedEmail({
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">Our admin team is verifying your payment screenshot and transaction UTR details. You will receive a confirmation email once verified.</p>
         </div>
         
-        <p>You can check your status anytime by logging into your account dashboard.</p>
-        <div style="text-align: center; margin-top: 25px;">
-          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Go to Leader Dashboard</a>
-        </div>
+        <p style="margin-top: 20px; font-size: 14px; font-weight: 600; color: #4f46e5; text-align: center;">Please visit the GLITCH portal for more details and status updates.</p>
         ${EMAIL_FOOTER}
       </div>
     </div>
@@ -308,9 +307,7 @@ export async function sendApprovalEmail({
         ${membersHtml}
         ${instructionsHtml}
 
-        <div style="text-align: center; margin-top: 25px;">
-          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Access Team Dashboard</a>
-        </div>
+        <p style="margin-top: 25px; font-size: 14px; font-weight: 600; color: #059669; text-align: center;">Please visit the GLITCH portal for more details and team management.</p>
         ${EMAIL_FOOTER}
       </div>
     </div>
@@ -355,6 +352,7 @@ export async function sendRejectionEmail({
         </div>
 
         <p>If you believe this was an error or would like to re-submit valid payment details, please reach out to our support team.</p>
+        <p style="margin-top: 20px; font-size: 14px; font-weight: 600; color: #dc2626; text-align: center;">Please visit the GLITCH portal for more details.</p>
         ${EMAIL_FOOTER}
       </div>
     </div>
@@ -377,11 +375,13 @@ export async function sendPasswordResetEmail({
       <div style="padding: 30px; color: #1f2937; line-height: 1.6;">
         <h2 style="color: #111827; font-size: 20px; margin-top: 0;">Reset Your Password</h2>
         <p>We received a request to reset your password for GLITCH - 1.0 hackathon portal.</p>
-        <p>Click the button below to choose a new password. This link is valid for 1 hour.</p>
+        <p>Please copy and paste or open the link below in your browser to choose a new password. This link is valid for 1 hour:</p>
         
-        <div style="text-align: center; margin: 25px 0;">
-          <a href="${resetUrl}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Reset Password</a>
+        <div style="margin: 20px 0; padding: 12px; background: #f3f4f6; border-radius: 8px; word-break: break-all; text-align: center;">
+          <a href="${resetUrl}" style="color: #4f46e5; font-size: 13px; font-weight: 600; text-decoration: underline;">${resetUrl}</a>
         </div>
+
+        <p style="margin-top: 15px; font-size: 14px; font-weight: 600; color: #4f46e5; text-align: center;">Please visit the GLITCH portal for more details.</p>
         <p style="font-size: 12px; color: #6b7280;">If you did not request a password reset, you can safely ignore this email.</p>
         ${EMAIL_FOOTER}
       </div>
@@ -423,6 +423,7 @@ export async function sendPsSelectionEmail({
         </div>
 
         <p style="font-size: 13px; color: #4b5563;">Note: As per GLITCH - 1.0 rules, your Problem Statement choice is permanently locked and cannot be edited or changed.</p>
+        <p style="margin-top: 20px; font-size: 14px; font-weight: 600; color: #4f46e5; text-align: center;">Please visit the GLITCH portal for more details.</p>
         ${EMAIL_FOOTER}
       </div>
     </div>
