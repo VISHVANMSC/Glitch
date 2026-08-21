@@ -399,7 +399,7 @@ export default function UserDashboard() {
                 </div>
 
                 <p className="text-xs text-slate-600 font-semibold">
-                  Download high-resolution PNGs to print or paste on physical team badges & event passes.
+                  Save your official team pass (QR Code & Barcode) for venue check-in, meal scanning, and event entry.
                 </p>
 
                 <div className="flex flex-col items-center justify-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
