@@ -181,10 +181,6 @@ export async function sendWelcomeSignupEmail({
           <p style="margin: 0; font-weight: 600; color: #374151;">Account Info:</p>
           <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">Registered Email: <strong>${email}</strong></p>
         </div>
-
-        <div style="text-align: center; margin-top: 25px;">
-          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Register Your Team</a>
-        </div>
         ${ EMAIL_FOOTER }
   </div>
     </div>
@@ -201,26 +197,28 @@ export async function sendRegistrationSubmittedEmail({
   leaderName: string;
   teamName: string;
 }) {
-  const subject = 'Registration Successful – GLITCH - 1.0';
+  const subject = `Registration Successful – Team "${teamName}" – GLITCH - 1.0`;
   const html = `
-    < div style = "font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;" >
-      ${ EMAIL_HEADER }
-  <div style="padding: 30px; color: #1f2937; line-height: 1.6;" >
-    <h2 style="color: #111827; font-size: 20px; margin-top: 0;" > Hello ${ leaderName }, </h2>
-      < p > Thank you for registering team < strong > "${teamName}" < /strong> for <strong>GLITCH - 1.0</strong >, A 24hrs National Level Hackathon.</p>
-        < p > Your registration has been submitted successfully and your application is currently < strong > under admin review < /strong>.</p >
-          <div style="background-color: #f3f4f6; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0;" >
-            <p style="margin: 0; font-weight: 600; color: #374151;" > Status: Pending Approval </p>
-              < p style = "margin: 5px 0 0 0; font-size: 13px; color: #6b7280;" > Our admin team is verifying your payment screenshot and transaction UTR details.You will receive a confirmation email once verified.</p>
-                </div>
-                < p > You can check your status anytime by logging into your account dashboard.</p>
-                  < div style = "text-align: center; margin-top: 25px;" >
-                    <a href="${appUrl}/login" style = "background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;" > Go to Leader Dashboard </a>
-                      </div>
-        ${ EMAIL_FOOTER }
-  </div>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+      ${EMAIL_HEADER}
+      <div style="padding: 30px; color: #1f2937; line-height: 1.6;">
+        <h2 style="color: #111827; font-size: 20px; margin-top: 0;">Hello ${leaderName} & Team "${teamName}",</h2>
+        <p>Thank you for registering team <strong>"${teamName}"</strong> for <strong>GLITCH - 1.0</strong>, A 24hrs National Level Hackathon.</p>
+        <p>Your registration has been submitted successfully and your application is currently <strong>under admin review</strong>.</p>
+        
+        <div style="background-color: #f3f4f6; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: 600; color: #374151;">Status: Pending Approval</p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #6b7280;">Our admin team is verifying your payment screenshot and transaction UTR details. You will receive a confirmation email once verified.</p>
+        </div>
+        
+        <p>You can check your status anytime by logging into your account dashboard.</p>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Go to Leader Dashboard</a>
+        </div>
+        ${EMAIL_FOOTER}
+      </div>
     </div>
-      `;
+  `;
   return sendEmail({ to: leaderEmail, subject, html });
 }
 
@@ -241,82 +239,82 @@ export async function sendApprovalEmail({
   barcodeUrl?: string | null;
   members?: Array<{ name: string; email: string; phone: string; college: string; department: string }>;
 }) {
-  const subject = `Registration Approved: Team ${ teamId } – GLITCH - 1.0 Pass & QR Code`;
+  const subject = `Registration Approved: Team "${teamName}" (${teamId}) – GLITCH - 1.0 Pass & QR Code`;
   
   const membersHtml = members && members.length > 0
     ? `
-    < div style = "margin: 20px 0; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;" >
-      <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;" > Registered Team Members(${ members.length }) </h4>
-        < table style = "width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;" >
-          <thead>
-          <tr style="border-bottom: 1px solid #d1d5db; color: #4b5563;" >
-            <th style="padding: 6px 0;" > Name </th>
-              < th style = "padding: 6px 0;" > Department </th>
-                </tr>
-                </thead>
-                <tbody>
-            ${
-    members.map((m) => `
-              <tr style="border-bottom: 1px solid #f3f4f6;">
-                <td style="padding: 6px 0; font-weight: 600; color: #111827;">${m.name}</td>
-                <td style="padding: 6px 0; color: #6b7280;">${m.department || 'N/A'}</td>
-              </tr>
-            `).join('')
-  }
-  </tbody>
-    </table>
+    <div style="margin: 20px 0; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px;">
+      <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Registered Team Members (${members.length})</h4>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+        <thead>
+          <tr style="border-bottom: 1px solid #d1d5db; color: #4b5563;">
+            <th style="padding: 6px 0;">Name</th>
+            <th style="padding: 6px 0;">Department</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${members.map((m) => `
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 6px 0; font-weight: 600; color: #111827;">${m.name}</td>
+              <td style="padding: 6px 0; color: #6b7280;">${m.department || 'N/A'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>
-      `
+    `
     : '';
 
   const qrSectionHtml = (qrCodeUrl || barcodeUrl)
     ? `
-    < div style = "background-color: #ffffff; border: 2px dashed #4f46e5; padding: 20px; border-radius: 12px; text-align: center; margin: 25px 0;" >
-      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #4338ca; font-weight: 800; display: block; margin-bottom: 10px;" > Official Team Scanning Pass </span>
-        
-        ${ qrCodeUrl ? `<img src="${qrCodeUrl}" alt="Team QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 5px; background: #ffffff;" />` : '' }
-        ${ barcodeUrl ? `<img src="${barcodeUrl}" alt="Team Barcode" style="width: 260px; height: auto; margin: 15px auto 0 auto; display: block;" />` : '' }
+    <div style="background-color: #ffffff; border: 2px dashed #4f46e5; padding: 20px; border-radius: 12px; text-align: center; margin: 25px 0;">
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #4338ca; font-weight: 800; display: block; margin-bottom: 10px;">Official Team Scanning Pass</span>
+      
+      ${qrCodeUrl ? `<img src="${qrCodeUrl}" alt="Team QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 5px; background: #ffffff;" />` : ''}
+      ${barcodeUrl ? `<img src="${barcodeUrl}" alt="Team Barcode" style="width: 260px; height: auto; margin: 15px auto 0 auto; display: block;" />` : ''}
 
-  <p style="margin: 12px 0 0 0; font-weight: 800; font-size: 18px; color: #1e1b4b; letter-spacing: 1px;" > Team ID: ${ teamId } </p>
-    < p style = "margin: 4px 0 0 0; font-size: 12px; color: #6366f1;" > Team: ${ teamName } </p>
-      </div>
-        `
+      <p style="margin: 12px 0 0 0; font-weight: 800; font-size: 18px; color: #1e1b4b; letter-spacing: 1px;">Team ID: ${teamId}</p>
+      <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700; color: #4338ca;">Team Name: ${teamName}</p>
+    </div>
+    `
     : '';
 
   const instructionsHtml = `
-      < div style = "background-color: #eef2ff; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #3730a3; line-height: 1.5;" >
-        <p style="margin: 0; font-weight: 700;" >📌 Attendance Scanning Instructions: </p>
-          < ul style = "margin: 6px 0 0 0; padding-left: 18px;" >
-            <li>Present this QR Code / Barcode(on your phone screen or printed copy) at the registration counter.</li>
-              < li > Your team pass will be scanned for <strong>Venue Check - In < /strong>, <strong>Breakfast</strong >, <strong>Lunch < /strong>, <strong>Refreshments</strong >, and < strong > Check - Out < /strong>.</li >
-                <li>Attendance is tracked individually per member at the scanning gate.Ensure all present members are with the team during scan.</li>
-                  </ul>
-                  </div>
-                    `;
+    <div style="background-color: #eef2ff; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #3730a3; line-height: 1.5;">
+      <p style="margin: 0; font-weight: 700;">📌 Attendance Scanning Instructions:</p>
+      <ul style="margin: 6px 0 0 0; padding-left: 18px;">
+        <li>Present this QR Code / Barcode (on your phone screen or printed copy) at the registration counter.</li>
+        <li>Your team pass will be scanned for <strong>Venue Check-In</strong>, <strong>Breakfast</strong>, <strong>Lunch</strong>, <strong>Refreshments</strong>, and <strong>Check-Out</strong>.</li>
+        <li>Attendance is tracked individually per member at the scanning gate. Ensure all present members are with the team during scan.</li>
+      </ul>
+    </div>
+  `;
 
   const html = `
-                  < div style = "font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;" >
-                    ${ EMAIL_HEADER }
-  <div style="padding: 30px; color: #1f2937; line-height: 1.6;" >
-    <h2 style="color: #059669; font-size: 22px; margin-top: 0;" > Congratulations ${ leaderName } !</h2>
-      < p > We are excited to inform you that your registration for team < strong > "${teamName}" < /strong> has been <strong>APPROVED</strong > for GLITCH - 1.0! </p>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+      ${EMAIL_HEADER}
+      <div style="padding: 30px; color: #1f2937; line-height: 1.6;">
+        <h2 style="color: #059669; font-size: 22px; margin-top: 0;">Congratulations Team "${teamName}"!</h2>
+        <p>Hello <strong>${leaderName}</strong> & Team Members,</p>
+        <p>We are excited to inform you that your registration for team <strong>"${teamName}"</strong> has been <strong>APPROVED</strong> for <strong>GLITCH - 1.0</strong>!</p>
 
-        < div style = "background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 18px; border-radius: 10px; text-align: center; margin: 20px 0;" >
-        <span style= "font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #047857; font-weight: 700;" > Assigned Team ID </span>
-          < h1 style = "font-size: 36px; color: #065f46; margin: 5px 0 0 0; font-weight: 900;" > ${ teamId } </h1>
-            </div>
+        <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 18px; border-radius: 10px; text-align: center; margin: 20px 0;">
+          <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #047857; font-weight: 700;">Assigned Team ID</span>
+          <h1 style="font-size: 36px; color: #065f46; margin: 5px 0 0 0; font-weight: 900;">${teamId}</h1>
+          <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700; color: #047857;">Team: ${teamName}</p>
+        </div>
 
-        ${ qrSectionHtml }
-        ${ membersHtml }
-        ${ instructionsHtml }
+        ${qrSectionHtml}
+        ${membersHtml}
+        ${instructionsHtml}
 
-  <div style="text-align: center; margin-top: 25px;" >
-    <a href="${appUrl}/login" style = "background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;" > Access Team Dashboard </a>
+        <div style="text-align: center; margin-top: 25px;">
+          <a href="${appUrl}/login" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; display: inline-block;">Access Team Dashboard</a>
+        </div>
+        ${EMAIL_FOOTER}
       </div>
-        ${ EMAIL_FOOTER }
-  </div>
     </div>
-      `;
+  `;
 
   // Build unique recipient list for leader and all team members
   const memberEmails = (members || []).map((m) => m.email?.trim()).filter((e) => e && e.includes('@'));
@@ -342,25 +340,25 @@ export async function sendRejectionEmail({
   teamName: string;
   rejectionReason: string;
 }) {
-  const subject = `Update Regarding Your Registration – GLITCH - 1.0`;
+  const subject = `Update Regarding Registration – Team "${teamName}" (GLITCH - 1.0)`;
   const html = `
-    < div style = "font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;" >
-      ${ EMAIL_HEADER }
-  <div style="padding: 30px; color: #1f2937; line-height: 1.6;" >
-    <h2 style="color: #dc2626; font-size: 20px; margin-top: 0;" > Registration Status Update </h2>
-      < p > Dear ${ leaderName }, </p>
-        < p > We regret to inform you that your registration for team < strong > "${teamName}" < /strong> could not be approved at this time.</p >
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+      ${EMAIL_HEADER}
+      <div style="padding: 30px; color: #1f2937; line-height: 1.6;">
+        <h2 style="color: #dc2626; font-size: 20px; margin-top: 0;">Registration Status Update</h2>
+        <p>Dear ${leaderName} & Team <strong>"${teamName}"</strong>,</p>
+        <p>We regret to inform you that your registration for team <strong>"${teamName}"</strong> could not be approved at this time.</p>
 
-          <div style= "background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; border-radius: 6px; margin: 20px 0;" >
-          <p style= "margin: 0; font-weight: 700; color: #991b1b;" > Reason for Rejection: </p>
-            < p style = "margin: 5px 0 0 0; color: #7f1d1d; font-size: 14px;" > ${ rejectionReason } </p>
-              </div>
+        <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; border-radius: 6px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: 700; color: #991b1b;">Reason for Rejection:</p>
+          <p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 14px;">${rejectionReason}</p>
+        </div>
 
-              < p > If you believe this was an error or would like to re - submit valid payment details, please reach out to our support team.</p>
-        ${ EMAIL_FOOTER }
-  </div>
+        <p>If you believe this was an error or would like to re-submit valid payment details, please reach out to our support team.</p>
+        ${EMAIL_FOOTER}
+      </div>
     </div>
-      `;
+  `;
   return sendEmail({ to: leaderEmail, subject, html });
 }
 
@@ -371,7 +369,7 @@ export async function sendPasswordResetEmail({
   email: string;
   resetToken: string;
 }) {
-  const resetUrl = `${ appUrl }/reset-password?token=${resetToken}`;
+  const resetUrl = `${appUrl}/reset-password?token=${resetToken}`;
   const subject = `Password Reset Request – GLITCH - 1.0`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
@@ -409,13 +407,13 @@ export async function sendPsSelectionEmail({
   psTitle: string;
   driveLink: string;
 }) {
-  const subject = `Problem Statement Selected: ${psNumber} – Team ${teamId} (GLITCH - 1.0)`;
+  const subject = `Problem Statement Selected: ${psNumber} – Team "${teamName}" (${teamId}) (GLITCH - 1.0)`;
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
       ${EMAIL_HEADER}
       <div style="padding: 30px; color: #1f2937; line-height: 1.6;">
         <h2 style="color: #4f46e5; font-size: 20px; margin-top: 0;">Problem Statement Selection Confirmed</h2>
-        <p>Hello ${leaderName},</p>
+        <p>Hello ${leaderName} & Team <strong>"${teamName}"</strong>,</p>
         <p>Team <strong>"${teamName}"</strong> (ID: <strong>${teamId}</strong>) has successfully selected your Problem Statement for GLITCH - 1.0.</p>
         
         <div style="background-color: #e0e7ff; border: 1px solid #c7d2fe; padding: 18px; border-radius: 8px; margin: 20px 0;">
