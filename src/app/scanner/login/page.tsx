@@ -112,14 +112,11 @@ export default function ScannerLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-500">
+          <div className="mt-6 pt-6 border-t border-slate-800/80 flex items-center justify-center text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              Role Restricted Login
+              Role Restricted Attendance Portal
             </span>
-            <a href="/login" className="text-indigo-400 hover:underline">
-              Admin Portal
-            </a>
           </div>
         </div>
       </div>

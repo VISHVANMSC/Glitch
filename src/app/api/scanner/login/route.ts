@@ -13,7 +13,10 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = scannerLoginSchema.parse(body);
 
-    const user = await dataService.findUserByEmail(parsed.email);
+    const cleanEmail = parsed.email.trim().toLowerCase();
+    const cleanPassword = parsed.password.trim();
+
+    const user = await dataService.findUserByEmail(cleanEmail);
     if (!user) {
       return NextResponse.json({ error: 'Invalid scanner credentials' }, { status: 401 });
     }
@@ -26,8 +29,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'This scanner account has been disabled by Admin.' }, { status: 403 });
     }
 
-    const isValid = await comparePassword(parsed.password, user.passwordHash);
+    const isValid = await comparePassword(cleanPassword, user.passwordHash);
     if (!isValid) {
+      await dataService.logAudit({
+        userId: user.id,
+        userEmail: user.email,
+        userRole: user.role,
+        action: 'SCANNER_LOGIN_FAILED',
+        details: `Failed scanner login attempt for email "${cleanEmail}"`,
+      }).catch(() => {});
       return NextResponse.json({ error: 'Invalid scanner credentials' }, { status: 401 });
     }
 

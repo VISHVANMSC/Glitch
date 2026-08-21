@@ -84,11 +84,6 @@ export default function Footer() {
                   Participant Dashboard
                 </Link>
               </li>
-              <li>
-                <Link href="/login?admin=true" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Admin Portal
-                </Link>
-              </li>
             </ul>
           </div>
 

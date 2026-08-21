@@ -247,10 +247,21 @@ Jury Verdict: The decision of the organizing committee and evaluation jury will 
 export const dataService = {
   // Users
   async findUserByEmail(email: string) {
+    if (!email || typeof email !== 'string') return null;
+    const cleanEmail = email.trim().toLowerCase();
     try {
-      return await prisma.user.findUnique({ where: { email } });
+      let user = await prisma.user.findFirst({
+        where: {
+          email: { equals: cleanEmail, mode: 'insensitive' },
+        },
+      });
+      if (!user) {
+        user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+      }
+      if (user) return user;
+      return memoryStore.users.find((u) => u.email.trim().toLowerCase() === cleanEmail) || null;
     } catch {
-      return memoryStore.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+      return memoryStore.users.find((u) => u.email.trim().toLowerCase() === cleanEmail) || null;
     }
   },
 
@@ -263,12 +274,13 @@ export const dataService = {
   },
 
   async createUser(data: { name: string; email: string; phone: string; passwordHash: string; role?: 'ADMIN' | 'TEAM_LEADER' | 'SCANNER'; allowedEvents?: string }) {
+    const cleanEmail = data.email.trim().toLowerCase();
     try {
       return await prisma.user.create({
         data: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
+          name: data.name.trim(),
+          email: cleanEmail,
+          phone: data.phone.trim(),
           passwordHash: data.passwordHash,
           role: data.role || 'TEAM_LEADER',
           isActive: true,
@@ -279,9 +291,9 @@ export const dataService = {
       console.error('[dataService.createUser Database Error]:', err);
       const newUser = {
         id: `user-${Date.now()}`,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
+        name: data.name.trim(),
+        email: cleanEmail,
+        phone: data.phone.trim(),
         passwordHash: data.passwordHash,
         role: data.role || 'TEAM_LEADER',
         isActive: true,

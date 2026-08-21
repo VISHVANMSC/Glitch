@@ -77,16 +77,9 @@ function LoginForm() {
           </span>
         </Link>
         
-        {isAdminParam ? (
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/40 text-xs font-black uppercase tracking-widest">
-            <ShieldCheck className="w-4 h-4 text-[#E43D12]" /> Admin Security Portal
-          </div>
-        ) : (
-          <h2 className="text-2xl font-black text-black">Account Login</h2>
-        )}
-
+        <h2 className="text-2xl font-black text-black">Account Login</h2>
         <p className="text-xs text-black font-extrabold">
-          {isAdminParam ? 'GLITCH 1.0 Admin Command Authorization' : 'Team Leader & Participant Authorization Portal'}
+          GLITCH 1.0 Account Authorization Portal
         </p>
       </div>
 

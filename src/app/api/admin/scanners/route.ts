@@ -40,16 +40,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Name, Email, and Password are required.' }, { status: 400 });
     }
 
-    const existingUser = await dataService.findUserByEmail(email);
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password.trim();
+
+    const existingUser = await dataService.findUserByEmail(cleanEmail);
     if (existingUser) {
-      return NextResponse.json({ error: `An account with email "${email}" already exists.` }, { status: 400 });
+      return NextResponse.json({ error: `An account with email "${cleanEmail}" already exists.` }, { status: 400 });
     }
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(cleanPassword);
     const newScanner = await dataService.createUser({
-      name,
-      email,
-      phone: phone || '',
+      name: name.trim(),
+      email: cleanEmail,
+      phone: phone ? phone.trim() : '',
       passwordHash,
       role: 'SCANNER',
       allowedEvents: allowedEvents ? JSON.stringify(allowedEvents) : undefined,
