@@ -76,7 +76,7 @@ function LoginForm() {
             GLITCH <span className="text-xs px-2 py-0.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] font-extrabold border border-[#E43D12]/30">1.0</span>
           </span>
         </Link>
-        
+
         <h2 className="text-2xl font-black text-black">Account Login</h2>
         <p className="text-xs text-black font-extrabold">
           GLITCH 1.0 Account Authorization Portal
@@ -111,11 +111,10 @@ function LoginForm() {
               value={formData.email}
               onBlur={() => setTouched({ ...touched, email: true })}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${
-                touched.email && emailError
+              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${touched.email && emailError
                   ? 'border-red-500 bg-red-50/20'
                   : 'border-slate-300 focus:border-[#E43D12]'
-              }`}
+                }`}
             />
           </div>
           {touched.email && emailError && (
@@ -144,11 +143,10 @@ function LoginForm() {
               value={formData.password}
               onBlur={() => setTouched({ ...touched, password: true })}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${
-                touched.password && passwordError
+              className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 text-sm font-extrabold bg-white text-black placeholder-slate-500 shadow-sm transition-colors ${touched.password && passwordError
                   ? 'border-red-500 bg-red-50/20'
                   : 'border-slate-300 focus:border-[#E43D12]'
-              }`}
+                }`}
             />
           </div>
           {touched.password && passwordError && (

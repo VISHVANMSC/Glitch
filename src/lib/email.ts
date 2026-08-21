@@ -238,7 +238,7 @@ export async function sendApprovalEmail({
   barcodeUrl?: string | null;
   members?: Array<{ name: string; email: string; phone: string; college: string; department: string }>;
 }) {
-  const subject = `Registration Approved: Team "${teamName}" (${teamId}) – GLITCH - 1.0 Pass & QR Code`;
+  const subject = `Registration Approved: Team "${teamName}" (${teamId}) – GLITCH - 1.0 Pass & Barcode`;
   
   const membersHtml = members && members.length > 0
     ? `
@@ -264,13 +264,12 @@ export async function sendApprovalEmail({
     `
     : '';
 
-  const qrSectionHtml = (qrCodeUrl || barcodeUrl)
+  const barcodeSectionHtml = barcodeUrl
     ? `
     <div style="background-color: #ffffff; border: 2px dashed #4f46e5; padding: 20px; border-radius: 12px; text-align: center; margin: 25px 0;">
-      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #4338ca; font-weight: 800; display: block; margin-bottom: 10px;">Official Team Scanning Pass</span>
+      <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #4338ca; font-weight: 800; display: block; margin-bottom: 12px;">Official Team Scanning Pass</span>
       
-      ${qrCodeUrl ? `<img src="${qrCodeUrl}" alt="Team QR Code" style="width: 180px; height: 180px; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 5px; background: #ffffff;" />` : ''}
-      ${barcodeUrl ? `<img src="${barcodeUrl}" alt="Team Barcode" style="width: 260px; height: auto; margin: 15px auto 0 auto; display: block;" />` : ''}
+      <img src="${barcodeUrl}" alt="Official Team Barcode Pass" style="width: 280px; max-width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; background: #ffffff;" />
 
       <p style="margin: 12px 0 0 0; font-weight: 800; font-size: 18px; color: #1e1b4b; letter-spacing: 1px;">Team ID: ${teamId}</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700; color: #4338ca;">Team Name: ${teamName}</p>
@@ -282,7 +281,7 @@ export async function sendApprovalEmail({
     <div style="background-color: #eef2ff; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #3730a3; line-height: 1.5;">
       <p style="margin: 0; font-weight: 700;">📌 Attendance Scanning Instructions:</p>
       <ul style="margin: 6px 0 0 0; padding-left: 18px;">
-        <li>Present this QR Code / Barcode (on your phone screen or printed copy) at the registration counter.</li>
+        <li>Present this Official Barcode Pass (on your phone screen or printed copy) at the registration counter.</li>
         <li>Your team pass will be scanned for <strong>Venue Check-In</strong>, <strong>Breakfast</strong>, <strong>Lunch</strong>, <strong>Refreshments</strong>, and <strong>Check-Out</strong>.</li>
         <li>Attendance is tracked individually per member at the scanning gate. Ensure all present members are with the team during scan.</li>
       </ul>
@@ -303,7 +302,7 @@ export async function sendApprovalEmail({
           <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700; color: #047857;">Team: ${teamName}</p>
         </div>
 
-        ${qrSectionHtml}
+        ${barcodeSectionHtml}
         ${membersHtml}
         ${instructionsHtml}
 

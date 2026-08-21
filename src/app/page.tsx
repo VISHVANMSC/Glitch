@@ -202,7 +202,7 @@ export default async function LandingPage() {
       {/* About Section */}
       <section id="about" className="py-24 relative z-10 bg-gradient-to-b from-transparent via-slate-50/60 to-transparent">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          
+
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest">
@@ -290,20 +290,20 @@ export default async function LandingPage() {
           {/* Card 4: Experience the Industry. Build the Future. */}
           <div className="card-3d p-8 sm:p-12 rounded-3xl bg-white border-2 border-[#E43D12] text-slate-900 shadow-xl space-y-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-tr from-[#E43D12]/10 via-[#EFB11D]/5 to-transparent rounded-full blur-3xl pointer-events-none" />
-            
+
             <div className="relative z-10 space-y-5">
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 text-xs font-black uppercase tracking-widest shadow-xs">
                 Industry Experience
               </div>
-              
+
               <h3 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 Experience the Industry. Build the Future.
               </h3>
-              
+
               <p className="text-slate-700 text-base sm:text-lg leading-relaxed font-semibold">
                 GLITCH 1.0 gives students a glimpse into what real-world software development looks like beyond classrooms and academic projects.
               </p>
-              
+
               <p className="text-slate-600 text-base sm:text-lg leading-relaxed font-semibold">
                 Participants get the opportunity to build under constraints, make decisions, solve challenges, and deliver a working product.
               </p>
@@ -344,7 +344,7 @@ export default async function LandingPage() {
           </p>
 
           <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch max-w-5xl mx-auto">
-            
+
             {/* 2nd Prize Card */}
             <div className="order-2 md:order-1 card-3d p-8 rounded-3xl flex flex-col justify-between bg-white border-2 border-slate-200 hover:border-[#D6536D] transition-all shadow-xl hover:-translate-y-1">
               <div className="space-y-4 text-center">
@@ -359,13 +359,13 @@ export default async function LandingPage() {
                 <span className="inline-block px-3 py-1 rounded-full bg-[#D6536D]/10 text-[#D6536D] border border-[#D6536D]/30 text-[10px] font-black uppercase tracking-widest">
                   Runner Up
                 </span>
-                
+
                 <h3 className="text-2xl font-black text-slate-900">2nd Prize</h3>
-                
+
                 <div className="text-4xl font-black text-[#D6536D] font-mono tracking-tight my-2">
                   {cms.secondPrize || '₹40,000'}
                 </div>
-                
+
                 <p className="text-xs text-slate-600 font-bold leading-relaxed pt-2 border-t border-slate-100">
                   Silver Trophy + Certificates of Excellence + Winner Badges
                 </p>
@@ -459,11 +459,11 @@ export default async function LandingPage() {
                 {(cms.rulesEligibility
                   ? cms.rulesEligibility.split('\n').map((l: string) => l.trim()).filter(Boolean)
                   : [
-                      'Team Size: Strictly 2 to 3 members per team. Registrations with fewer than 2 or more than 3 members will be rejected.',
-                      'Institutional Uniformity: All team members must belong to the exact same college/institution as selected by the Team Leader.',
-                      'Single Account Registration: Only the Team Leader creates an account and logs into the platform. Separate member accounts are not required.',
-                      'Student Status: Open to all undergraduate & postgraduate engineering and technology students across India.',
-                    ]
+                    'Team Size: Strictly 2 to 3 members per team. Registrations with fewer than 2 or more than 3 members will be rejected.',
+                    'Institutional Uniformity: All team members must belong to the exact same college/institution as selected by the Team Leader.',
+                    'Single Account Registration: Only the Team Leader creates an account and logs into the platform. Separate member accounts are not required.',
+                    'Student Status: Open to all undergraduate & postgraduate engineering and technology students across India.',
+                  ]
                 ).map((ruleStr: string, idx: number) => {
                   const colonIdx = ruleStr.indexOf(':');
                   const title = colonIdx !== -1 ? ruleStr.substring(0, colonIdx).trim() : '';
@@ -491,11 +491,11 @@ export default async function LandingPage() {
                 {(cms.rulesConduct
                   ? cms.rulesConduct.split('\n').map((l: string) => l.trim()).filter(Boolean)
                   : [
-                      'Problem Statement Lock: Problem statement selection is permitted only during the active Admin timer window. Once locked, selection cannot be edited or changed.',
-                      'Originality: All code written during GLITCH - 1.0 must be fresh work. Pre-existing projects are strictly prohibited.',
-                      'Payment Proof Verification: Upload of valid payment receipt screenshot and UTR transaction number is mandatory for Admin approval.',
-                      'Jury Verdict: The decision of the organizing committee and evaluation jury will be final and binding.',
-                    ]
+                    'Problem Statement Lock: Problem statement selection is permitted only during the active Admin timer window. Once locked, selection cannot be edited or changed.',
+                    'Originality: All code written during GLITCH - 1.0 must be fresh work. Pre-existing projects are strictly prohibited.',
+                    'Payment Proof Verification: Upload of valid payment receipt screenshot and UTR transaction number is mandatory for Admin approval.',
+                    'Jury Verdict: The decision of the organizing committee and evaluation jury will be final and binding.',
+                  ]
                 ).map((ruleStr: string, idx: number) => {
                   const colonIdx = ruleStr.indexOf(':');
                   const title = colonIdx !== -1 ? ruleStr.substring(0, colonIdx).trim() : '';
@@ -542,11 +542,11 @@ export default async function LandingPage() {
                 {(cms.agendaDay1
                   ? cms.agendaDay1.split('\n').map((l: string) => l.trim()).filter(Boolean)
                   : [
-                      '08:30 AM | Reporting & Badge Verification | Check-in at venue and team badge collection.',
-                      '09:30 AM | Grand Inauguration Ceremony | Welcome note by Faculty Chairs and Chief Guest address.',
-                      '10:30 AM | PS Window Opens & Hackathon Commences | Problem statement selection window activates online.',
-                      '04:00 PM | Mentorship Round 1 | Architecture review and technical guidance by industry experts.',
-                    ]
+                    '08:30 AM | Reporting & Badge Verification | Check-in at venue and team badge collection.',
+                    '09:30 AM | Grand Inauguration Ceremony | Welcome note by Faculty Chairs and Chief Guest address.',
+                    '10:30 AM | PS Window Opens & Hackathon Commences | Problem statement selection window activates online.',
+                    '04:00 PM | Mentorship Round 1 | Architecture review and technical guidance by industry experts.',
+                  ]
                 ).map((itemStr: string, idx: number) => {
                   const parts = itemStr.split('|').map((p: string) => p.trim());
                   const time = parts[0] || 'Scheduled';
@@ -575,11 +575,11 @@ export default async function LandingPage() {
                 {(cms.agendaDay2
                   ? cms.agendaDay2.split('\n').map((l: string) => l.trim()).filter(Boolean)
                   : [
-                      '09:00 AM | Mentorship & Prototype Check-in | Mid-evaluation and feature sanity checks.',
-                      '10:30 AM | Final Code Freeze & Repository Lock | All submissions locked in GitHub / Drive link.',
-                      '11:30 AM | Jury Presentations & Demo Round | Live 5-minute team pitches in front of Grand Jury panel.',
-                      '01:30 PM | Valedictory & Prize Distribution | Winner announcements and trophy presentation.',
-                    ]
+                    '09:00 AM | Mentorship & Prototype Check-in | Mid-evaluation and feature sanity checks.',
+                    '10:30 AM | Final Code Freeze & Repository Lock | All submissions locked in GitHub / Drive link.',
+                    '11:30 AM | Jury Presentations & Demo Round | Live 5-minute team pitches in front of Grand Jury panel.',
+                    '01:30 PM | Valedictory & Prize Distribution | Winner announcements and trophy presentation.',
+                  ]
                 ).map((itemStr: string, idx: number) => {
                   const parts = itemStr.split('|').map((p: string) => p.trim());
                   const time = parts[0] || 'Scheduled';
