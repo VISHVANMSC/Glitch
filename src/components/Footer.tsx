@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { Mail, Phone, MapPin, Shield } from 'lucide-react';
 
 export default function Footer() {
@@ -10,9 +9,9 @@ export default function Footer() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[700px] h-[250px] bg-gradient-to-t from-[#E43D12]/15 via-[#D6536D]/10 to-transparent blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-slate-200">
-          {/* Brand Col */}
-          <div className="space-y-4 md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 pb-12 border-b border-slate-200">
+          {/* Brand Col & Hackathon Details */}
+          <div className="space-y-4 max-w-md">
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md">
                 <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
@@ -33,62 +32,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Quick Links</h4>
-            <ul className="space-y-2 text-xs font-semibold">
-              <li>
-                <Link href="#about" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  About GLITCH - 1.0
-                </Link>
-              </li>
-              <li>
-                <Link href="#highlights" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Event Highlights & Tracks
-                </Link>
-              </li>
-              <li>
-                <Link href="#agenda" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Schedule & Timeline
-                </Link>
-              </li>
-              <li>
-                <Link href="#rules" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Rules & Eligibility
-                </Link>
-              </li>
-              <li>
-                <Link href="#coordinators" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Organizing Committee
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Hackathon Portals */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Hackathon Portals</h4>
-            <ul className="space-y-2 text-xs font-semibold">
-              <li>
-                <Link href="/signup" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Team Registration
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Team Leader Login
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-[#E43D12] transition-colors text-slate-600">
-                  Participant Dashboard
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Contact Details */}
-          <div className="space-y-3">
+          {/* Contact & Venue Details */}
+          <div className="space-y-3 md:justify-self-end">
             <h4 className="text-xs font-black uppercase tracking-widest text-[#E43D12]">Contact & Venue</h4>
             <div className="space-y-2.5 text-xs text-slate-600 font-medium">
               <div className="flex items-start gap-2">
