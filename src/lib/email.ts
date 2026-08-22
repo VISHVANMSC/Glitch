@@ -47,9 +47,9 @@ const transporter465 = createGmailTransporter(465, true);
 const transporter587 = createGmailTransporter(587, false);
 
 const EMAIL_HEADER = `
-  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 30px 20px; text-align: center; border-radius: 12px 12px 0 0; border-bottom: 3px solid #E43D12;">
-    <img src="${appUrl}/images/logo_v2.png" alt="GLITCH - 1.0 Logo" style="max-width: 320px; width: 90%; height: auto; display: block; margin: 0 auto 10px auto;" />
-    <p style="color: #94a3b8; margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">24hrs Premier National Level Hackathon</p>
+  <div style="background: #ffffff; padding: 25px 20px; text-align: center; border-radius: 12px 12px 0 0; border-bottom: 3px solid #E43D12; border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+    <img src="${appUrl}/images/logo.png" alt="GLITCH - 1.0 Logo" style="max-width: 320px; width: 90%; height: auto; display: block; margin: 0 auto 10px auto;" />
+    <p style="color: #64748b; margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">24hrs Premier National Level Hackathon</p>
   </div>
 `;
 

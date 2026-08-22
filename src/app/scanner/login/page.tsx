@@ -37,8 +37,8 @@ export default function ScannerLoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="flex items-center justify-center mb-4">
-          <img src="/images/logo_v2.png" alt="GLITCH 1.0 Logo" className="h-16 sm:h-20 w-auto object-contain max-w-[320px] drop-shadow-md" />
+        <div className="inline-flex items-center justify-center mb-4 bg-white/95 px-5 py-2.5 rounded-2xl shadow-xl border border-slate-700/50">
+          <img src="/images/logo.png" alt="GLITCH 1.0 Logo" className="h-12 sm:h-14 w-auto object-contain max-w-[280px]" />
         </div>
         <h2 className="text-2xl font-extrabold tracking-tight text-white">
           Attendance Scanner Portal
