@@ -1,0 +1,23 @@
+name: Supabase Activity Keep-Alive
+
+on:
+  schedule:
+    # Run every 12 hours (at 00:00 and 12:00 UTC)
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase-keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Lightweight Server-Side Activity Request
+        run: |
+          APP_URL="${{ secrets.NEXT_PUBLIC_APP_URL || 'https://glitchmsc.vercel.app' }}"
+          CRON_SECRET="${{ secrets.CRON_SECRET }}"
+          
+          if [ -n "$CRON_SECRET" ]; then
+            curl -s -X GET "$APP_URL/api/cron/supabase-keepalive" -H "Authorization: Bearer $CRON_SECRET"
+          else
+            curl -s -X GET "$APP_URL/api/cron/supabase-keepalive"
+          fi
+          echo "Supabase keep-alive check completed."
