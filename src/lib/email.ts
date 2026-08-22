@@ -1,5 +1,7 @@
 import nodemailer from 'nodemailer';
 import dns from 'dns';
+import fs from 'fs';
+import path from 'path';
 
 // Prefer IPv4 to avoid ENETUNREACH issues on networks without IPv6 SMTP routing
 try {
@@ -11,6 +13,7 @@ try {
 const gmailUser = process.env.GMAIL_USER || 'glitch.hackathon.official@gmail.com';
 const gmailPass = (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '');
 const resendApiKey = process.env.RESEND_API_KEY || '';
+
 const getAppUrl = (): string => {
   const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
   if (envUrl && envUrl.trim().length > 0) {
@@ -24,6 +27,23 @@ const getAppUrl = (): string => {
 };
 
 const appUrl = getAppUrl();
+
+function getLogoAttachment() {
+  try {
+    const logoPath = path.join(process.cwd(), 'public/images/logo.png');
+    if (fs.existsSync(logoPath)) {
+      return {
+        filename: 'glitch_logo.png',
+        content: fs.readFileSync(logoPath),
+        cid: 'glitch_logo',
+        contentType: 'image/png',
+      };
+    }
+  } catch (e) {
+    // Ignore fallback
+  }
+  return null;
+}
 
 const createGmailTransporter = (port: number, secure: boolean) =>
   nodemailer.createTransport({
@@ -48,7 +68,7 @@ const transporter587 = createGmailTransporter(587, false);
 
 const EMAIL_HEADER = `
   <div style="background: #ffffff; padding: 25px 20px; text-align: center; border-radius: 12px 12px 0 0; border-bottom: 3px solid #E43D12; border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
-    <img src="${appUrl}/images/logo.png" alt="GLITCH - 1.0 Logo" style="max-width: 320px; width: 90%; height: auto; display: block; margin: 0 auto 10px auto;" />
+    <img src="cid:glitch_logo" alt="GLITCH - 1.0 Logo" style="max-width: 320px; width: 90%; height: auto; display: block; margin: 0 auto 10px auto;" />
     <p style="color: #64748b; margin: 0; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">24hrs Premier National Level Hackathon</p>
   </div>
 `;
@@ -81,20 +101,34 @@ function htmlToPlainText(html: string): string {
     .trim();
 }
 
-async function sendViaResend({ to, subject, html }: { to: string; subject: string; html: string }) {
+async function sendViaResend({
+  to,
+  subject,
+  html,
+  attachments,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: Array<{ filename: string; content: string }>;
+}) {
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const payload: any = {
+    from: `GLITCH 1.0 <${fromEmail}>`,
+    to: [to],
+    subject,
+    html,
+  };
+  if (attachments && attachments.length > 0) {
+    payload.attachments = attachments;
+  }
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${resendApiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from: `GLITCH 1.0 <${fromEmail}>`,
-      to: [to],
-      subject,
-      html,
-    }),
+    body: JSON.stringify(payload),
   });
   const data = await response.json();
   if (!response.ok) {
@@ -105,12 +139,49 @@ async function sendViaResend({ to, subject, html }: { to: string; subject: strin
 
 import { dataService } from '@/lib/dataService';
 
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  // Option 1: Try Resend API over HTTPS if RESEND_API_KEY is configured
+export interface EmailAttachment {
+  filename: string;
+  content: Buffer | string;
+  cid?: string;
+  contentType?: string;
+}
+
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  attachments = [],
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  attachments?: EmailAttachment[];
+}) {
+  // Always attach GLITCH logo for inline rendering
+  const logoAtt = getLogoAttachment();
+  const finalAttachments = logoAtt
+    ? [logoAtt, ...attachments.filter((a) => a.cid !== 'glitch_logo')]
+    : attachments;
+
+  // Format base64 attachments for Resend
+  const resendAttachments = finalAttachments.map((att) => {
+    let contentStr = '';
+    if (Buffer.isBuffer(att.content)) {
+      contentStr = att.content.toString('base64');
+    } else if (typeof att.content === 'string') {
+      contentStr = att.content.replace(/^data:image\/\w+;base64,/, '');
+    }
+    return {
+      filename: att.filename,
+      content: contentStr,
+    };
+  });
+
+  // Option 1: Try Resend API over HTTPS
   if (resendApiKey) {
     try {
       console.log(`[Resend Dispatch] To: ${to} | Subject: ${subject}`);
-      const resendRes = await sendViaResend({ to, subject, html });
+      const resendRes = await sendViaResend({ to, subject, html, attachments: resendAttachments });
       await dataService.createEmailLog({ recipient: to, subject, status: 'SENT' }).catch(() => { });
       return resendRes;
     } catch (err: any) {
@@ -118,7 +189,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     }
   }
 
-  // Option 2: Fallback to mock mode if password missing or test value
+  // Option 2: Fallback to mock mode if password missing
   if (!gmailPass || gmailPass.includes('abcd')) {
     console.log(`[Email Mock Dispatch] To: ${to} | Subject: ${subject}`);
     await dataService.createEmailLog({ recipient: to, subject, status: 'SENT (MOCK)' }).catch(() => { });
@@ -127,6 +198,24 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
 
   // Option 3: Nodemailer SMTP with automatic Port 465 (SSL) -> Port 587 (STARTTLS) fallback
   const text = htmlToPlainText(html);
+  const nodemailerAttachments = finalAttachments.map((att) => {
+    let contentBuf: Buffer;
+    if (Buffer.isBuffer(att.content)) {
+      contentBuf = att.content;
+    } else if (typeof att.content === 'string') {
+      const base64Str = att.content.replace(/^data:image\/\w+;base64,/, '');
+      contentBuf = Buffer.from(base64Str, 'base64');
+    } else {
+      contentBuf = Buffer.alloc(0);
+    }
+    return {
+      filename: att.filename,
+      content: contentBuf,
+      cid: att.cid,
+      contentType: att.contentType || 'image/png',
+    };
+  });
+
   const mailOptions = {
     from: `"GLITCH 1.0 Team" <${gmailUser}>`,
     replyTo: `"GLITCH 1.0 Support" <${gmailUser}>`,
@@ -134,6 +223,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     subject,
     text,
     html,
+    attachments: nodemailerAttachments,
     headers: {
       'X-Mailer': 'GLITCH-Hackathon-Mailer/1.0',
       'X-Auto-Response-Suppress': 'OOF, AutoReply',
@@ -264,18 +354,31 @@ export async function sendApprovalEmail({
     `
     : '';
 
-  const barcodeSectionHtml = barcodeUrl
-    ? `
+  const emailAttachments: EmailAttachment[] = [];
+
+  let barcodeSectionHtml = '';
+  if (barcodeUrl) {
+    const base64Data = barcodeUrl.replace(/^data:image\/\w+;base64,/, '');
+    const barcodeBuffer = Buffer.from(base64Data, 'base64');
+    
+    emailAttachments.push({
+      filename: `team_barcode_${teamId}.png`,
+      content: barcodeBuffer,
+      cid: 'team_barcode_pass',
+      contentType: 'image/png',
+    });
+
+    barcodeSectionHtml = `
     <div style="background-color: #ffffff; border: 2px dashed #4f46e5; padding: 20px; border-radius: 12px; text-align: center; margin: 25px 0;">
       <span style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #4338ca; font-weight: 800; display: block; margin-bottom: 12px;">Official Team Scanning Pass</span>
       
-      <img src="${barcodeUrl}" alt="Official Team Barcode Pass" style="width: 280px; max-width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 8px; background: #ffffff;" />
+      <img src="cid:team_barcode_pass" alt="Official Team Barcode Pass" style="width: 320px; max-width: 100%; height: auto; margin: 0 auto; display: block; border-radius: 8px; border: 1px solid #e2e8f0; padding: 12px; background: #ffffff;" />
 
       <p style="margin: 12px 0 0 0; font-weight: 800; font-size: 18px; color: #1e1b4b; letter-spacing: 1px;">Team ID: ${teamId}</p>
       <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 700; color: #4338ca;">Team Name: ${teamName}</p>
     </div>
-    `
-    : '';
+    `;
+  }
 
   const instructionsHtml = `
     <div style="background-color: #eef2ff; border-left: 4px solid #4f46e5; padding: 15px; border-radius: 6px; margin: 20px 0; font-size: 13px; color: #3730a3; line-height: 1.5;">
@@ -318,7 +421,7 @@ export async function sendApprovalEmail({
 
   // Send to all team recipients
   const results = await Promise.all(
-    allRecipients.map((recipient) => sendEmail({ to: recipient, subject, html }))
+    allRecipients.map((recipient) => sendEmail({ to: recipient, subject, html, attachments: emailAttachments }))
   );
 
   const primaryResult = results[0] || { success: true };
