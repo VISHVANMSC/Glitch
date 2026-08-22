@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
       <div className="max-w-md w-full card-3d p-8 sm:p-10 rounded-3xl bg-white border border-slate-200 shadow-2xl relative z-10 space-y-6">
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-3 group mb-2 justify-center">
-            <img src="/images/logo.png" alt="GLITCH 1.0 Logo" className="h-12 w-auto object-contain max-w-[220px]" />
+            <img src="/images/logo.png" alt="GLITCH 1.0 Logo" className="h-14 sm:h-16 w-auto object-contain max-w-[280px]" />
           </Link>
           <h2 className="text-2xl font-black text-slate-900">Forgot Password</h2>
           <p className="text-xs text-slate-600 font-semibold">

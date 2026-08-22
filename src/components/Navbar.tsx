@@ -63,11 +63,11 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
       >
         {/* Brand Logo with Official GLITCH 1.0 Logo */}
         <Link href={user ? (user.role === 'ADMIN' ? '/admin' : '/dashboard') : '/'} className="flex items-center gap-3 group">
-          <div className="relative h-10 w-auto flex items-center justify-center group-hover:scale-105 transition-transform">
+          <div className="relative h-10 sm:h-12 w-auto flex items-center justify-center group-hover:scale-105 transition-transform">
             <img
               src={logoUrl || '/images/logo.png'}
               alt="GLITCH 1.0 Logo"
-              className="h-10 w-auto object-contain max-w-[180px]"
+              className="h-10 sm:h-12 w-auto object-contain max-w-[200px] sm:max-w-[240px]"
             />
           </div>
         </Link>
