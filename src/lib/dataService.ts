@@ -351,6 +351,23 @@ export const dataService = {
     }
   },
 
+  async updateUserPassword(id: string, passwordHash: string) {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { passwordHash },
+      });
+    } catch {
+      const idx = memoryStore.users.findIndex((u) => u.id === id);
+      if (idx !== -1) {
+        memoryStore.users[idx].passwordHash = passwordHash;
+        memoryStore.users[idx].updatedAt = new Date();
+        return memoryStore.users[idx];
+      }
+      return null;
+    }
+  },
+
   // Teams & Registrations
   async getTeamByLeaderId(leaderId: string) {
     let team: any = null;

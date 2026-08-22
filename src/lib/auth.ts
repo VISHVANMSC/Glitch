@@ -60,3 +60,27 @@ export async function getSessionUser(): Promise<TokenPayload | null> {
     return null;
   }
 }
+
+export interface ResetTokenPayload {
+  userId: string;
+  email: string;
+  action: 'password_reset';
+}
+
+export function signPasswordResetToken(payload: { userId: string; email: string }): string {
+  return jwt.sign(
+    { ...payload, action: 'password_reset' },
+    JWT_SECRET,
+    { expiresIn: '15m' }
+  );
+}
+
+export function verifyPasswordResetToken(token: string): ResetTokenPayload | null {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as ResetTokenPayload;
+    if (decoded.action !== 'password_reset') return null;
+    return decoded;
+  } catch {
+    return null;
+  }
+}

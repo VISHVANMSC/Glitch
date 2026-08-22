@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { dataService } from '@/lib/dataService';
 import { comparePassword, setAuthCookie } from '@/lib/auth';
+import { checkRateLimit, getClientIp } from '@/lib/rateLimit';
 
 const scannerLoginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -10,6 +11,15 @@ const scannerLoginSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+    const rateCheck = checkRateLimit(clientIp, 'scanner_login', 5, 60000); // 5 attempts per minute
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please wait a minute before trying again.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = scannerLoginSchema.parse(body);
 
