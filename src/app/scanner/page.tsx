@@ -649,14 +649,16 @@ export default function ScannerDashboard() {
             </div>
 
             {/* Team Leader & Institution Details */}
-            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 grid grid-cols-2 gap-4 text-xs">
+            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <span className="text-slate-400 font-semibold block">Team Leader</span>
                 <span className="font-bold text-slate-200 text-sm">{scannedTeam.leaderName}</span>
               </div>
               <div>
-                <span className="text-slate-400 font-semibold block">Institution</span>
-                <span className="font-bold text-indigo-400 text-sm truncate block">{scannedTeam.members?.[0]?.college || 'College'}</span>
+                <span className="text-slate-400 font-semibold block">Institution / College</span>
+                <span className="font-bold text-indigo-400 text-sm truncate block" title={membersList?.[0]?.college || 'College'}>
+                  🏫 {membersList?.[0]?.college || 'College'}
+                </span>
               </div>
             </div>
 
@@ -704,15 +706,20 @@ export default function ScannerDashboard() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-1">
                         <span className="font-bold text-sm text-white truncate">{m.name}</span>
                         {m.isLeader && (
-                          <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-extrabold uppercase">
+                          <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-1.5 py-0.5 rounded font-extrabold uppercase shrink-0">
                             Leader
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5 truncate">{m.department || 'Participant'}</p>
+                      <p className="text-[11px] text-emerald-400 font-extrabold mt-0.5 truncate flex items-center gap-1">
+                        🏫 {m.college || 'College'}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium truncate">
+                        {m.department || 'Department'} • {m.year || 'Participant'}
+                      </p>
                     </div>
                   </div>
                 ))}

@@ -39,12 +39,47 @@ export async function GET(req: Request) {
       });
     }
 
-    const events = await dataService.getEvents();
-    const attendanceRecords = await dataService.getTeamAttendanceRecords(team.id);
+    let events = await dataService.getEvents();
+    const attendanceRecords = await dataService.getTeamAttendanceRecords(team.id, team.teamId);
+
+    // Merge events from attendance records if not present in events list
+    const knownEventIds = new Set(events.map((e: any) => e.id));
+    for (const rec of attendanceRecords) {
+      if (rec.event && !knownEventIds.has(rec.event.id)) {
+        events.push(rec.event);
+        knownEventIds.add(rec.event.id);
+      }
+    }
+
+    // Fallback default events if none exist in system yet
+    if (events.length === 0) {
+      events = [
+        {
+          id: 'default-checkin-event',
+          name: 'Venue Check-In',
+          type: 'CHECK_IN',
+          isActive: true,
+        },
+        {
+          id: 'default-lunch-event',
+          name: 'Lunch & Dining Pass',
+          type: 'LUNCH',
+          isActive: false,
+        },
+        {
+          id: 'default-snacks-event',
+          name: 'Refreshment & Snacks',
+          type: 'REFRESHMENT',
+          isActive: false,
+        },
+      ];
+    }
 
     // Compute event tracking summaries for this team
     const summary = events.map((event: any) => {
-      const eventRecords = attendanceRecords.filter((r: any) => r.eventId === event.id);
+      const eventRecords = attendanceRecords.filter(
+        (r: any) => r.eventId === event.id || r.event?.type === event.type
+      );
       const presentRecords = eventRecords.filter((r: any) => r.status === 'PRESENT');
 
       // Unique present member IDs

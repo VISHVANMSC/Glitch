@@ -356,27 +356,30 @@ export default function TeamTrackingView({ teamId }: TeamTrackingViewProps) {
                     return (
                       <div
                         key={member.id}
-                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+                        className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs ${
                           isScanned
-                            ? 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+                            ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
                             : 'bg-white border-slate-200 text-slate-600'
                         }`}
                       >
-                        <div className="space-y-0.5 truncate">
-                          <div className="flex items-center gap-1.5 truncate">
-                            <span className="font-extrabold text-slate-900 text-xs truncate">{member.name}</span>
+                        <div className="space-y-0.5 min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-extrabold text-slate-900 text-xs break-words">{member.name}</span>
                             {member.isLeader && (
-                              <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 border border-indigo-200">
+                              <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 border border-indigo-200 shrink-0">
                                 Leader
                               </span>
                             )}
                           </div>
+                          <p className="text-[10px] text-[#E43D12] font-bold break-words flex items-center gap-1">
+                            🏫 {member.college}
+                          </p>
                           <p className="text-[10px] text-slate-500 font-medium truncate">
                             {member.department} ({member.year})
                           </p>
                         </div>
 
-                        <div className="text-right shrink-0">
+                        <div className="text-left sm:text-right shrink-0 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
                           {isScanned ? (
                             <div className="space-y-0.5">
                               <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider inline-flex items-center gap-1 shadow-xs">
@@ -387,7 +390,7 @@ export default function TeamTrackingView({ teamId }: TeamTrackingViewProps) {
                               </span>
                             </div>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-bold text-[10px] uppercase">
+                            <span className="px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-bold text-[10px] uppercase inline-block">
                               Not Scanned
                             </span>
                           )}

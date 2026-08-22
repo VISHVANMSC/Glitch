@@ -315,6 +315,9 @@ export default function UserDashboard() {
               )}
             </div>
 
+            {/* View-Only Participant & Team Tracking System */}
+            <TeamTrackingView teamId={teamData?.id} />
+
             {/* Team Members List */}
             <div className="card-3d p-6 sm:p-8 rounded-3xl bg-white border-slate-200 shadow-xl space-y-4">
               <h2 className="text-xl font-black text-slate-900 flex items-center gap-2 border-b pb-3 border-slate-200">
@@ -323,33 +326,41 @@ export default function UserDashboard() {
 
               <div className="space-y-3">
                 {teamData.members?.map((mem: any, idx: number) => (
-                  <div key={mem.id || idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-extrabold text-slate-900 text-sm">{mem.name}</h4>
+                  <div
+                    key={mem.id || idx}
+                    className="p-4.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 overflow-hidden shadow-xs hover:border-slate-300 transition-colors"
+                  >
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h4 className="font-extrabold text-slate-900 text-sm sm:text-base break-words">{mem.name}</h4>
                         {mem.isLeader && (
-                          <span className="text-[10px] font-black uppercase tracking-wider bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-[#E43D12]/10 text-[#E43D12] border border-[#E43D12]/30 px-2 py-0.5 rounded shrink-0">
                             Team Leader
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-600 font-semibold">
+                      <p className="text-xs text-slate-600 font-semibold truncate">
                         {mem.department} • {mem.year}
                       </p>
-                      <p className="text-xs text-[#E43D12] font-extrabold">{mem.college}</p>
+                      <p className="text-xs text-[#E43D12] font-extrabold break-words flex items-center gap-1 mt-0.5">
+                        🏫 {mem.college}
+                      </p>
                     </div>
 
-                    <div className="text-right text-xs text-slate-600 font-semibold space-y-0.5">
-                      <p>✉️ {mem.email}</p>
-                      <p>📞 {mem.phone}</p>
+                    <div className="text-left sm:text-right text-xs text-slate-600 font-semibold space-y-1 shrink-0 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-200/80 min-w-0">
+                      <p className="break-all flex items-center gap-1.5 sm:justify-end text-slate-700">
+                        <span className="shrink-0 text-slate-400">✉️</span>
+                        <span className="truncate">{mem.email}</span>
+                      </p>
+                      <p className="break-all flex items-center gap-1.5 sm:justify-end text-slate-700">
+                        <span className="shrink-0 text-slate-400">📞</span>
+                        <span>{mem.phone}</span>
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            {/* View-Only Participant & Team Tracking System */}
-            <TeamTrackingView teamId={teamData?.id} />
           </div>
 
           {/* Sidebar Info Column */}

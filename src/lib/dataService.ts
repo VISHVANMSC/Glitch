@@ -1126,10 +1126,17 @@ export const dataService = {
     }
   },
 
-  async getTeamAttendanceRecords(teamId: string) {
+  async getTeamAttendanceRecords(teamId: string, alternateTeamId?: string) {
+    const ids = Array.from(new Set([teamId, alternateTeamId].filter(Boolean) as string[]));
     try {
       return await prisma.attendanceRecord.findMany({
-        where: { teamId },
+        where: {
+          OR: [
+            { teamId: { in: ids } },
+            { team: { id: { in: ids } } },
+            { team: { teamId: { in: ids } } },
+          ],
+        },
         include: {
           event: true,
           team: true,
@@ -1140,10 +1147,10 @@ export const dataService = {
       });
     } catch {
       return memoryStore.attendanceRecords
-        .filter((r) => r.teamId === teamId)
+        .filter((r) => ids.includes(r.teamId) || (r.team && (ids.includes(r.team.id) || ids.includes(r.team.teamId))))
         .map((r) => {
           const event = memoryStore.events.find((e) => e.id === r.eventId);
-          const team = memoryStore.teams.find((t) => t.id === r.teamId);
+          const team = memoryStore.teams.find((t) => ids.includes(t.id) || (t.teamId && ids.includes(t.teamId)));
           const member = memoryStore.teamMembers.find((m) => m.id === r.memberId);
           const scanner = memoryStore.users.find((u) => u.id === r.scannerId);
           return { ...r, event, team, member, scanner };
