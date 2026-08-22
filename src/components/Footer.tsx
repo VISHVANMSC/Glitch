@@ -13,14 +13,7 @@ export default function Footer() {
           {/* Brand Col & Hackathon Details */}
           <div className="space-y-4 max-w-md">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md">
-                <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                  <span className="font-black text-[#E43D12] text-lg">G</span>
-                </div>
-              </div>
-              <span className="font-black text-2xl tracking-tight text-slate-900">
-                GLITCH <span className="text-xs px-2 py-0.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] font-extrabold border border-[#E43D12]/30">1.0</span>
-              </span>
+              <img src="/images/logo.png" alt="GLITCH 1.0 Logo" className="h-10 w-auto object-contain max-w-[200px]" />
             </div>
             <p className="text-xs text-slate-600 leading-relaxed font-medium">
               A Premier 24hrs National Level Hackathon uniting visionary student innovators, developers, and designers to shape the next technological wave.

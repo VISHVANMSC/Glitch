@@ -66,15 +66,8 @@ function LoginForm() {
   return (
     <div className="max-w-md w-full card-3d p-8 sm:p-10 rounded-3xl bg-white border-2 border-slate-300 shadow-2xl relative z-10 space-y-6">
       <div className="text-center space-y-2">
-        <Link href="/" className="inline-flex items-center gap-3 group mb-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center overflow-hidden">
-              <img src="/images/mascot_3d.png" alt="Glitchy Mascot" className="w-9 h-9 object-contain" />
-            </div>
-          </div>
-          <span className="font-black text-2xl tracking-tight text-black">
-            GLITCH <span className="text-xs px-2 py-0.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] font-extrabold border border-[#E43D12]/30">1.0</span>
-          </span>
+        <Link href="/" className="inline-flex items-center gap-3 group mb-2 justify-center">
+          <img src="/images/logo.png" alt="GLITCH 1.0 Logo" className="h-12 w-auto object-contain max-w-[220px]" />
         </Link>
 
         <h2 className="text-2xl font-black text-black">Account Login</h2>

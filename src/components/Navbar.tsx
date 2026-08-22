@@ -61,31 +61,14 @@ export default function Navbar({ user: initialUser }: NavbarProps) {
             : 'bg-white/65 backdrop-blur-xl border border-white/50 shadow-lg shadow-slate-900/5'
         }`}
       >
-        {/* Brand Logo with Custom Uploaded Logo or Fallback Badge */}
+        {/* Brand Logo with Official GLITCH 1.0 Logo */}
         <Link href={user ? (user.role === 'ADMIN' ? '/admin' : '/dashboard') : '/'} className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-[#E43D12] via-[#D6536D] to-[#EFB11D] p-0.5 shadow-md shadow-[#E43D12]/20 group-hover:scale-105 transition-all">
-            <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="GLITCH Logo"
-                  className="w-full h-full object-contain p-0.5 group-hover:rotate-6 transition-transform"
-                />
-              ) : (
-                <span className="font-black text-[#E43D12] text-lg">G</span>
-              )}
-            </div>
-          </div>
-          <div>
-            <span className="font-black text-lg tracking-tight text-slate-900 flex items-center gap-2">
-              GLITCH{' '}
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E43D12]/10 text-[#E43D12] font-extrabold border border-[#E43D12]/30 tracking-wider">
-                1.0
-              </span>
-            </span>
-            <p className="text-[9px] uppercase font-extrabold tracking-widest text-[#D6536D]">
-              National Level Hackathon
-            </p>
+          <div className="relative h-10 w-auto flex items-center justify-center group-hover:scale-105 transition-transform">
+            <img
+              src={logoUrl || '/images/logo.png'}
+              alt="GLITCH 1.0 Logo"
+              className="h-10 w-auto object-contain max-w-[180px]"
+            />
           </div>
         </Link>
 

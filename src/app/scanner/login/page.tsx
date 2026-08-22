@@ -37,14 +37,14 @@ export default function ScannerLoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 text-slate-100 font-sans">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 mb-4 shadow-lg shadow-indigo-500/10">
-          <QrCode className="w-8 h-8" />
+        <div className="flex items-center justify-center mb-4">
+          <img src="/images/logo_v2.png" alt="GLITCH 1.0 Logo" className="h-14 w-auto object-contain max-w-[240px]" />
         </div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-white">
-          Attendance Scanner
+        <h2 className="text-2xl font-extrabold tracking-tight text-white">
+          Attendance Scanner Portal
         </h2>
-        <p className="mt-2 text-sm text-slate-400">
-          GLITCH - 1.0 Gate Control & Meal Scanning Portal
+        <p className="mt-1 text-xs text-slate-400">
+          GLITCH - 1.0 Gate Control & Meal Scanning System
         </p>
       </div>
 
