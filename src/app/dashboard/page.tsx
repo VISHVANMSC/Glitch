@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import TeamTrackingView from '@/components/TeamTrackingView';
 import {
   Users,
   CheckCircle2,
@@ -346,6 +347,9 @@ export default function UserDashboard() {
                 ))}
               </div>
             </div>
+
+            {/* View-Only Participant & Team Tracking System */}
+            <TeamTrackingView teamId={teamData?.id} />
           </div>
 
           {/* Sidebar Info Column */}

@@ -1126,6 +1126,31 @@ export const dataService = {
     }
   },
 
+  async getTeamAttendanceRecords(teamId: string) {
+    try {
+      return await prisma.attendanceRecord.findMany({
+        where: { teamId },
+        include: {
+          event: true,
+          team: true,
+          member: true,
+          scanner: { select: { id: true, name: true, email: true } },
+        },
+        orderBy: { scannedAt: 'desc' },
+      });
+    } catch {
+      return memoryStore.attendanceRecords
+        .filter((r) => r.teamId === teamId)
+        .map((r) => {
+          const event = memoryStore.events.find((e) => e.id === r.eventId);
+          const team = memoryStore.teams.find((t) => t.id === r.teamId);
+          const member = memoryStore.teamMembers.find((m) => m.id === r.memberId);
+          const scanner = memoryStore.users.find((u) => u.id === r.scannerId);
+          return { ...r, event, team, member, scanner };
+        });
+    }
+  },
+
   // Audit Logs
   async logAudit(data: {
     userId?: string;
