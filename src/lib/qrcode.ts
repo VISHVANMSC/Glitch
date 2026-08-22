@@ -6,6 +6,9 @@ export interface QrBarcodeResult {
   barcodeData: string;
   qrCodeUrl: string;
   barcodeUrl: string;
+  barcodePngUrl: string;
+  barcodeSvgUrl: string;
+  barcodeSvgRaw: string;
 }
 
 // Complete Code 128 Pattern Table (Patterns 0 to 106)
@@ -103,7 +106,7 @@ function makeChunk(type: string, data: Buffer): Buffer {
 }
 
 /**
- * Generates a native, compliant Code 128 B barcode PNG Data URL (works 100% in Gmail, Outlook, and all email clients).
+ * Generates a native, compliant Code 128 B barcode PNG Data URL.
  */
 export function generateCode128PngDataUrl(text: string): string {
   const cleanText = text.trim().toUpperCase();
@@ -124,7 +127,7 @@ export function generateCode128PngDataUrl(text: string): string {
   const barHeight = 65;
   const fontScale = 2;
   const fontRowHeight = 7 * fontScale;
-  const height = 10 + barHeight + 10 + fontRowHeight + 10; // ~109px total height
+  const height = 10 + barHeight + 10 + fontRowHeight + 10;
 
   let totalModules = 0;
   for (const c of codeArr) {
@@ -142,7 +145,7 @@ export function generateCode128PngDataUrl(text: string): string {
 
   for (let y = 0; y < height; y++) {
     const rowOffset = y * rowBytes;
-    rawScanlines[rowOffset] = 0; // Filter 0
+    rawScanlines[rowOffset] = 0;
     for (let x = 0; x < width; x++) {
       const pxOffset = rowOffset + 1 + x * 4;
       rawScanlines[pxOffset] = 255;
@@ -237,6 +240,77 @@ export function generateCode128PngDataUrl(text: string): string {
 }
 
 /**
+ * Generates a clean, standard Code 128 B barcode SVG XML string.
+ */
+export function generateCode128SvgString(text: string): string {
+  const cleanText = text.trim().toUpperCase();
+  let codeArr: number[] = [104];
+  let checksum = 104;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const code = cleanText.charCodeAt(i) - 32;
+    codeArr.push(code);
+    checksum += code * (i + 1);
+  }
+
+  codeArr.push(checksum % 103);
+  codeArr.push(106);
+
+  const quietZone = 20;
+  const moduleWidth = 3;
+  const barHeight = 70;
+  const fontRowHeight = 20;
+  const totalHeight = 10 + barHeight + 10 + fontRowHeight + 10;
+
+  let totalModules = 0;
+  for (const c of codeArr) {
+    const pattern = CODE128_PATTERNS[c];
+    if (pattern) {
+      for (let p = 0; p < pattern.length; p++) {
+        totalModules += parseInt(pattern[p], 10);
+      }
+    }
+  }
+
+  const totalWidth = Math.max(320, quietZone * 2 + totalModules * moduleWidth);
+
+  let rects = '';
+  let curX = quietZone;
+
+  for (const c of codeArr) {
+    const pattern = CODE128_PATTERNS[c];
+    if (!pattern) continue;
+
+    let isBar = true;
+    for (let p = 0; p < pattern.length; p++) {
+      const w = parseInt(pattern[p], 10) * moduleWidth;
+      if (isBar) {
+        rects += `<rect x="${curX}" y="10" width="${w}" height="${barHeight}" fill="#000000" />`;
+      }
+      curX += w;
+      isBar = !isBar;
+    }
+  }
+
+  const textX = totalWidth / 2;
+  const textY = 10 + barHeight + 22;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" style="background:#ffffff;">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  ${rects}
+  <text x="${textX}" y="${textY}" font-family="monospace, sans-serif" font-size="16" font-weight="bold" fill="#1e1b4b" text-anchor="middle">${cleanText}</text>
+</svg>`;
+}
+
+/**
+ * Generates a compliant Code 128 B barcode SVG Data URL with exact bars & spaces.
+ */
+export function generateCode128SvgDataUrl(text: string): string {
+  const svg = generateCode128SvgString(text);
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
+/**
  * Generates a unique QR code data string and barcode data string for a team ID.
  * e.g., teamId = "GL-01" -> qrCodeData = "GLITCH-TEAM:GL-01", barcodeData = "GL2026001"
  */
@@ -258,20 +332,18 @@ export async function generateTeamQrAndBarcode(teamId: string): Promise<QrBarcod
     },
   });
 
-  // 2. Generate Standard Code 128 Barcode PNG Data URL (compatible with Gmail, Outlook, and all email clients)
-  const barcodeUrl = generateCode128PngDataUrl(cleanTeamId);
+  // 2. Generate Standard Code 128 Barcode PNG and SVG Data URLs
+  const barcodePngUrl = generateCode128PngDataUrl(cleanTeamId);
+  const barcodeSvgRaw = generateCode128SvgString(cleanTeamId);
+  const barcodeSvgUrl = generateCode128SvgDataUrl(cleanTeamId);
 
   return {
     qrCodeData,
     barcodeData,
     qrCodeUrl,
-    barcodeUrl,
+    barcodeUrl: barcodePngUrl,
+    barcodePngUrl,
+    barcodeSvgUrl,
+    barcodeSvgRaw,
   };
-}
-
-/**
- * Generates a compliant Code 128 B barcode SVG Data URL with exact bars & spaces.
- */
-export function generateCode128SvgDataUrl(text: string): string {
-  return generateCode128PngDataUrl(text);
 }

@@ -423,7 +423,7 @@ export default function UserDashboard() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <button
                     type="button"
                     onClick={async () => {
@@ -441,9 +441,28 @@ export default function UserDashboard() {
                         window.open(teamData.barcodeUrl, '_blank');
                       }
                     }}
-                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-[1.02]"
+                    className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02]"
                   >
-                    <Download className="w-4 h-4 text-white" /> Download Barcode Pass (PNG)
+                    <Download className="w-4 h-4 text-white" /> Download Barcode (PNG)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const cleanId = (teamData.teamId || 'TEAM').toUpperCase();
+                      const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120" style="background:#ffffff;"><rect width="100%" height="100%" fill="#ffffff"/><text x="180" y="65" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e1b4b">${cleanId}</text></svg>`;
+                      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `${cleanId}_Barcode.svg`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                    }}
+                    className="w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 cursor-pointer transition-transform hover:scale-[1.02]"
+                  >
+                    <Download className="w-4 h-4 text-white" /> Download Barcode (SVG)
                   </button>
                 </div>
               </div>

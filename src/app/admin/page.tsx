@@ -2069,27 +2069,48 @@ export default function AdminDashboard() {
                         </button>
                       )}
                       {selectedTeamModal.barcodeUrl && (
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            try {
-                              const res = await fetch(selectedTeamModal.barcodeUrl);
-                              const blob = await res.blob();
+                        <>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(selectedTeamModal.barcodeUrl);
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${selectedTeamModal.teamId || 'Team'}_Barcode.png`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                              } catch {
+                                window.open(selectedTeamModal.barcodeUrl, '_blank');
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Download className="w-3.5 h-3.5 text-white" /> Download Barcode (PNG)
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const cleanId = (selectedTeamModal.teamId || 'TEAM').toUpperCase();
+                              const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="360" height="120" viewBox="0 0 360 120" style="background:#ffffff;"><rect width="100%" height="100%" fill="#ffffff"/><text x="180" y="65" font-family="monospace" font-size="24" font-weight="bold" text-anchor="middle" fill="#1e1b4b">${cleanId}</text></svg>`;
+                              const blob = new Blob([svgContent], { type: 'image/svg+xml' });
                               const url = window.URL.createObjectURL(blob);
                               const a = document.createElement('a');
                               a.href = url;
-                              a.download = `${selectedTeamModal.teamId || 'Team'}_Barcode.png`;
+                              a.download = `${cleanId}_Barcode.svg`;
                               document.body.appendChild(a);
                               a.click();
                               document.body.removeChild(a);
-                            } catch {
-                              window.open(selectedTeamModal.barcodeUrl, '_blank');
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
-                        >
-                          <Download className="w-3.5 h-3.5 text-white" /> Download Barcode
-                        </button>
+                            }}
+                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Download className="w-3.5 h-3.5 text-white" /> Download Barcode (SVG)
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"

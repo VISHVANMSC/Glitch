@@ -34,21 +34,21 @@ export async function GET(request: Request) {
 
       // 1. Add QR Code image to ZIP
       if (passType === 'ALL' || passType === 'QR') {
-        if (qrDataUrl && qrDataUrl.startsWith('data:image/png;base64,')) {
-          const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, '');
+        const qrData = qrDataUrl || generated.qrCodeUrl;
+        if (qrData && qrData.includes('base64,')) {
+          const base64Data = qrData.split('base64,')[1];
           zip.file(`QR_Codes/${teamId}_${cleanTeamName}_QR.png`, base64Data, { base64: true });
         }
       }
 
-      // 2. Add Barcode image to ZIP
+      // 2. Add BOTH Barcode PNG AND Barcode SVG images to ZIP
       if (passType === 'ALL' || passType === 'BARCODE') {
-        if (barcodeUrl && barcodeUrl.startsWith('data:image/svg+xml;base64,')) {
-          const base64Data = barcodeUrl.replace(/^data:image\/svg\+xml;base64,/, '');
-          zip.file(`Barcodes/${teamId}_${cleanTeamName}_Barcode.svg`, base64Data, { base64: true });
-        } else if (barcodeUrl && barcodeUrl.startsWith('data:image/png;base64,')) {
-          const base64Data = barcodeUrl.replace(/^data:image\/png;base64,/, '');
-          zip.file(`Barcodes/${teamId}_${cleanTeamName}_Barcode.png`, base64Data, { base64: true });
-        }
+        // PNG format barcode
+        const pngBase64 = generated.barcodePngUrl.split('base64,')[1];
+        zip.file(`Barcodes_PNG/${teamId}_${cleanTeamName}_Barcode.png`, pngBase64, { base64: true });
+
+        // SVG format barcode
+        zip.file(`Barcodes_SVG/${teamId}_${cleanTeamName}_Barcode.svg`, generated.barcodeSvgRaw);
       }
 
       manifestRows.push(
